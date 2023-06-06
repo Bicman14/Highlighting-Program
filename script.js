@@ -120,13 +120,13 @@ sizeRange.addEventListener("input", (event) => {
 });
 
 fileInput.addEventListener("change", (event) => {
-  filesByName.clear();
-  filesByName.set();
   if (!fileInput.files.length) {
     return;
   }
   for (const file of fileInput.files) {
     //file.text = clear.text;
+    const pictureLocation = URL.createObjectURL(file);
+    filesByName.set(file.name, pictureLocation);
     const option = document.createElement("option");
     option.value = file.name; // prints file name
     option.text = file.name;
@@ -135,7 +135,13 @@ fileInput.addEventListener("change", (event) => {
 });
 
 function changeImage() {
-  const selectedOption = select.options[select.selectedIndex];
-  const selectedImage = selectedOption.value;
-  map.src = selectedImage;
+  const selectedImage = select.value;
+
+  if (selectedImage) {
+    map.src = filesByName.get(selectedImage);
+  } else {
+    map.src = ""; // Clear the image source if no option is selected
+  }
 }
+
+select.addEventListener("change", changeImage);
