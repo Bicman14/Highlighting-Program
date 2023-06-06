@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Interactive Map</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <img src="firemap.png" alt="Interactive Map" id="map" />
+      <div id="highlights"></div>
+    </div>
+    <div class="button-container">
+      <button id="toggle-button" onclick="changeColor()">
+        Green Highlight
+      </button>
+      <button onclick="clearAll()">Clear All</button>
+      <button onclick="eraseHighlight()">Undo Highlight</button>
+      <div>
+        <input value="45" type="range" id="size" name="size"
+               min="10" max="100">
+        <label for="size">Highlight Size</label>
+      </div>
+      <div>
+        <label for="pictures">Select Image</label>
+        <select name="pictures" element="option" id="pictures" onchange="changeImage">
+          <option>Select a Picture</option>
+
+        </select>
+      </div>
+      <div>
+        <label>Select Files</label>
+        <input type="file"
+        id="file" name="file"
+        accept="image/png, image/jpeg"
+        multiple="multiple">
+      </div>
+    </div>
+    <div class="counter-container">
+      <p id="counter">
+        <span class="green-text" id="green-count">0</span> :
+        <span class="red-text" id="red-count">0</span>
+      </p>
+    </div>
+    </body>
+    <script src="script.js"></script>
+  </body>
+</html>
