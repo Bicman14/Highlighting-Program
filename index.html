@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Mark points of interest on a floor plan or uploaded image."
+    />
+    <title>Highlighting Program</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="app">
+      <section class="map-container" aria-label="Interactive map">
+        <div class="map-frame">
+          <img src="assets/firemap.png" alt="Fire extinguisher map" id="map" />
+          <div id="highlights" aria-hidden="true"></div>
+          <div id="cursor-preview" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <aside class="controls" aria-label="Highlight controls">
+        <h1>Highlighting Program</h1>
+
+        <button id="toggle-color" type="button">Highlight color: Green</button>
+        <button id="undo-highlight" type="button">Undo last highlight</button>
+        <button id="clear-highlights" type="button">Clear all highlights</button>
+
+        <div class="field">
+          <label for="size">Highlight size</label>
+          <input value="45" type="range" id="size" min="10" max="100" />
+        </div>
+
+        <div class="field">
+          <label for="file">Upload images</label>
+          <input type="file" id="file" accept="image/png, image/jpeg" multiple />
+        </div>
+
+        <div class="field">
+          <label for="pictures">Select uploaded image</label>
+          <select id="pictures" disabled>
+            <option value="">No uploaded images</option>
+          </select>
+        </div>
+
+        <p class="counter" aria-live="polite">
+          <span><strong class="green-text" id="green-count">0</strong> green</span>
+          <span><strong class="red-text" id="red-count">0</strong> red</span>
+        </p>
+      </aside>
+    </main>
+  </body>
+</html>

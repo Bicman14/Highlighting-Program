@@ -1,147 +1,143 @@
-// Check if the required elements are present on the page
-const map = document.getElementById("map");
-const highlights = document.getElementById("highlights");
-const toggleButton = document.getElementById("toggle-button");
-const counter = document.getElementById("counter");
-const sizeRange = document.getElementById("size");
-const fileInput = document.getElementById("file");
-const select = document.getElementById("pictures");
-const filesByName = new Map();
+const elements = {
+  map: document.getElementById("map"),
+  highlights: document.getElementById("highlights"),
+  cursorPreview: document.getElementById("cursor-preview"),
+  toggleColor: document.getElementById("toggle-color"),
+  undoHighlight: document.getElementById("undo-highlight"),
+  clearHighlights: document.getElementById("clear-highlights"),
+  sizeRange: document.getElementById("size"),
+  fileInput: document.getElementById("file"),
+  pictureSelect: document.getElementById("pictures"),
+  greenCount: document.getElementById("green-count"),
+  redCount: document.getElementById("red-count"),
+};
 
-if (!fileInput) {
-  throw new Error("Element with ID 'fileInput' not found");
+for (const [name, element] of Object.entries(elements)) {
+  if (!element) {
+    throw new Error(`Required element "${name}" was not found.`);
+  }
 }
 
-if (!sizeRange) {
-  throw new Error("Element with ID 'sizeRange' not found");
-}
-
-if (!map) {
-  throw new Error("Element with ID 'map' not found");
-}
-
-if (!highlights) {
-  throw new Error("Element with ID 'highlights' not found");
-}
-
-if (!toggleButton) {
-  throw new Error("Element with ID 'toggle-button' not found");
-}
-
-if (!counter) {
-  throw new Error("Element with ID 'counter' not found");
-}
-
-let highlightCount = 0;
-let currentHighlight;
+const uploadedImages = new Map();
 let currentColor = "green";
-let greenCount = 0;
-let redCount = 0;
-let diameter = 45;
+let diameter = elements.sizeRange.valueAsNumber;
+let highlightId = 0;
 
-map.addEventListener("pointerdown", (event) => {
-  const x = event.x;
-  const y = event.y;
+function getCounts() {
+  return {
+    green: elements.highlights.querySelectorAll(".highlight.green").length,
+    red: elements.highlights.querySelectorAll(".highlight.red").length,
+  };
+}
 
-  currentHighlight = document.createElement("div");
-  currentHighlight.classList.add("highlight", currentColor);
-  currentHighlight.style.left = `${x - diameter / 2}px`;
-  currentHighlight.style.top = `${y - diameter / 2}px`;
-  currentHighlight.style.width = diameter + "px";
-  currentHighlight.style.height = diameter + "px";
+function updateCounter() {
+  const counts = getCounts();
+  elements.greenCount.textContent = counts.green;
+  elements.redCount.textContent = counts.red;
+}
 
-  highlightCount++;
-  currentHighlight.setAttribute("id", `highlight-${highlightCount}`);
-  highlights.appendChild(currentHighlight);
+function clearHighlights() {
+  elements.highlights.replaceChildren();
+  updateCounter();
+}
 
-  updateCounter(currentColor, 1);
-});
+function setPreviewPosition(event) {
+  const bounds = elements.highlights.getBoundingClientRect();
+  elements.cursorPreview.style.display = "block";
+  elements.cursorPreview.style.left = `${event.clientX - bounds.left}px`;
+  elements.cursorPreview.style.top = `${event.clientY - bounds.top}px`;
+}
 
-function changeColor() {
-  if (currentColor === "green") {
-    currentColor = "red";
-    toggleButton.textContent = "Red Highlight";
+function placeHighlight(event) {
+  const bounds = elements.highlights.getBoundingClientRect();
+  const highlight = document.createElement("div");
+  const xPercent = ((event.clientX - bounds.left) / bounds.width) * 100;
+  const yPercent = ((event.clientY - bounds.top) / bounds.height) * 100;
+
+  highlightId += 1;
+  highlight.id = `highlight-${highlightId}`;
+  highlight.classList.add("highlight", currentColor);
+  highlight.style.left = `${xPercent}%`;
+  highlight.style.top = `${yPercent}%`;
+  highlight.style.width = `${diameter}px`;
+  highlight.style.height = `${diameter}px`;
+
+  elements.highlights.appendChild(highlight);
+  updateCounter();
+}
+
+function toggleColor() {
+  currentColor = currentColor === "green" ? "red" : "green";
+  const label = currentColor[0].toUpperCase() + currentColor.slice(1);
+  elements.toggleColor.textContent = `Highlight color: ${label}`;
+}
+
+function undoHighlight() {
+  elements.highlights.lastElementChild?.remove();
+  updateCounter();
+}
+
+function resetUploadedImages() {
+  for (const objectUrl of uploadedImages.values()) {
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  uploadedImages.clear();
+  elements.pictureSelect.replaceChildren();
+}
+
+function addSelectOption(value, label) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  elements.pictureSelect.appendChild(option);
+}
+
+function loadUploadedImages() {
+  resetUploadedImages();
+
+  for (const file of elements.fileInput.files) {
+    const objectUrl = URL.createObjectURL(file);
+    uploadedImages.set(file.name, objectUrl);
+    addSelectOption(file.name, file.name);
+  }
+
+  elements.pictureSelect.disabled = uploadedImages.size === 0;
+
+  if (uploadedImages.size > 0) {
+    elements.pictureSelect.selectedIndex = 0;
+    changeImage();
   } else {
-    currentColor = "green";
-    toggleButton.textContent = "Green Highlight";
+    addSelectOption("", "No uploaded images");
   }
 }
-
-function clearAll() {
-  while (highlights.firstChild) {
-    highlights.removeChild(highlights.firstChild);
-  }
-
-  highlightCount = 0;
-  greenCount = 0;
-  redCount = 0;
-  document.getElementById("green-count").textContent = greenCount;
-  document.getElementById("red-count").textContent = redCount;
-}
-
-//Erases last placed Highlight in Order placed.
-function eraseHighlight() {
-  const lastHighlight = highlights.lastChild;
-  if (lastHighlight) {
-    const lastHighlightColor = lastHighlight.classList.contains("green")
-      ? "green"
-      : "red";
-    highlights.removeChild(lastHighlight);
-    highlightCount--;
-    updateCounter(lastHighlightColor, -1);
-  }
-}
-//Updates the counter for red and green circles on screen.
-function updateCounter(color, amount) {
-  if (color === "green") {
-    greenCount += amount;
-    document.getElementById("green-count").textContent = greenCount;
-  } else if (color === "red") {
-    redCount += amount;
-    document.getElementById("red-count").textContent = redCount;
-  }
-}
-//Has a Grey circle following the mouse on screen.
-const greyCircle = document.createElement("div");
-greyCircle.classList.add("grey-circle");
-greyCircle.style.width = diameter + "px";
-greyCircle.style.height = diameter + "px";
-document.body.appendChild(greyCircle);
-
-document.addEventListener("pointermove", (event) => {
-  greyCircle.style.left = `${event.pageX - greyCircle.offsetWidth / 2}px`;
-  greyCircle.style.top = `${event.pageY - greyCircle.offsetHeight / 2}px`;
-});
-//Changes the size of the circles for both the grey and red/green.
-sizeRange.addEventListener("input", (event) => {
-  diameter = sizeRange.valueAsNumber;
-  greyCircle.style.width = diameter + "px";
-  greyCircle.style.height = diameter + "px";
-});
-
-fileInput.addEventListener("change", (event) => {
-  if (!fileInput.files.length) {
-    return;
-  }
-  for (const file of fileInput.files) {
-    //file.text = clear.text;
-    const pictureLocation = URL.createObjectURL(file);
-    filesByName.set(file.name, pictureLocation);
-    const option = document.createElement("option");
-    option.value = file.name; // prints file name
-    option.text = file.name;
-    select.appendChild(option);
-  }
-});
 
 function changeImage() {
-  const selectedImage = select.value;
+  const selectedImage = uploadedImages.get(elements.pictureSelect.value);
 
   if (selectedImage) {
-    map.src = filesByName.get(selectedImage);
-  } else {
-    map.src = ""; // Clear the image source if no option is selected
+    elements.map.src = selectedImage;
+    elements.map.alt = `Uploaded image: ${elements.pictureSelect.value}`;
+    clearHighlights();
   }
 }
 
-select.addEventListener("change", changeImage);
+elements.highlights.addEventListener("pointerdown", placeHighlight);
+elements.highlights.addEventListener("pointermove", setPreviewPosition);
+elements.highlights.addEventListener("pointerleave", () => {
+  elements.cursorPreview.style.display = "none";
+});
+elements.toggleColor.addEventListener("click", toggleColor);
+elements.undoHighlight.addEventListener("click", undoHighlight);
+elements.clearHighlights.addEventListener("click", clearHighlights);
+elements.sizeRange.addEventListener("input", () => {
+  diameter = elements.sizeRange.valueAsNumber;
+  elements.cursorPreview.style.width = `${diameter}px`;
+  elements.cursorPreview.style.height = `${diameter}px`;
+});
+elements.fileInput.addEventListener("change", loadUploadedImages);
+elements.pictureSelect.addEventListener("change", changeImage);
+window.addEventListener("beforeunload", resetUploadedImages);
+
+elements.cursorPreview.style.width = `${diameter}px`;
+elements.cursorPreview.style.height = `${diameter}px`;
