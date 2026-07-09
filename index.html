@@ -53,6 +53,15 @@
           <button id="clear-highlights" type="button">Clear all highlights</button>
 
           <div class="field">
+            <label for="built-in-pictures">Built-in pictures</label>
+            <select id="built-in-pictures">
+              <option value="">Choose a built-in picture</option>
+              <option value="assets/firemap.png">Fire extinguisher map</option>
+              <option value="assets/worldmap.jpg">World map</option>
+            </select>
+          </div>
+
+          <div class="field">
             <label for="size">Highlight size</label>
             <div class="size-control">
               <input value="45" type="range" id="size" min="10" max="100" />
@@ -81,13 +90,42 @@
           <div class="field note-editor">
             <label for="highlight-note">Selected highlight note</label>
             <p id="selected-highlight-label">Select a highlight to add a note.</p>
+            <input
+              id="note-author"
+              type="text"
+              placeholder="Person's name"
+              disabled
+            />
+            <select id="store-location" disabled>
+              <option value="">Select store # and location</option>
+              <option value="001|Main Store">001 - Main Store</option>
+              <option value="002|North Location">002 - North Location</option>
+              <option value="003|South Location">003 - South Location</option>
+              <option value="custom|Custom Location">Custom location</option>
+            </select>
+            <div class="custom-store-fields" id="custom-store-fields" hidden>
+              <input id="custom-store-number" type="text" placeholder="Store #" disabled />
+              <input id="custom-store-location" type="text" placeholder="Store location" disabled />
+            </div>
             <textarea
               id="highlight-note"
               rows="5"
               placeholder="Add a note for the selected highlight"
               disabled
             ></textarea>
+            <p class="helper-text" id="note-timestamp">No note saved yet.</p>
             <button id="save-note" type="button" disabled>Save note</button>
+          </div>
+
+          <div class="field export-tools">
+            <label>Exports and saved project code</label>
+            <button id="export-csv" type="button">Export Excel CSV</button>
+            <button id="export-image" type="button">Export picture with highlights</button>
+            <button id="save-project" type="button">Save project folder</button>
+            <button id="load-project-folder" type="button">Load project folder</button>
+            <p class="helper-text">
+              Project folders include the highlighted picture, Excel CSV, and restore code.
+            </p>
           </div>
 
           <p class="counter" aria-live="polite">

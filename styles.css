@@ -21,6 +21,7 @@ textarea {
 
 button,
 select,
+input[type="text"],
 input[type="file"] {
   width: 100%;
 }
@@ -35,6 +36,12 @@ button {
 
 button:hover {
   background: #eef1f5;
+}
+
+input[type="text"] {
+  border: 1px solid #b7bcc5;
+  border-radius: 0.4rem;
+  padding: 0.65rem;
 }
 
 textarea {
@@ -231,6 +238,16 @@ textarea {
   font-size: 0.9rem;
 }
 
+.custom-store-fields {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.export-tools {
+  padding-top: 1rem;
+  border-top: 1px solid #d7dbe1;
+}
+
 .notes-list {
   display: grid;
   gap: 0.75rem;
@@ -244,6 +261,11 @@ textarea {
 
 .note-title {
   font-weight: 700;
+}
+
+.note-meta {
+  color: #5f6673;
+  font-size: 0.85rem;
 }
 
 .note-body {

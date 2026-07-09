@@ -20,18 +20,32 @@ The dropdown resets on every new browser session. It only lists pictures that ha
 - Switch between green and red highlights with **Highlight color**.
 - Adjust the circle diameter with **Highlight size** and use the inline preview to see the exact circle size.
 - Add notes to the selected highlight from the **Map** tab.
+- Add the note author's name plus store number and location before saving.
 - Open the **Notes** tab to review saved notes.
 - Select a saved note to locate its highlight on the image.
 - Remove the latest mark with **Undo last highlight**.
 - Remove every mark with **Clear all highlights**.
+- Choose a bundled image from **Built-in pictures** for quick use.
 - Choose or upload a picture from a local folder.
 - Use **Session picture history** to switch between pictures displayed during the current session.
+- Export note details to a CSV file that opens in Excel.
+- Export the current picture with highlight circles drawn onto it when the browser can access the image.
+- Save and reload a project folder with the source picture, highlighted picture, Excel CSV, and restore JSON.
 
 ## Project structure
 
 - `index.html` contains the application markup.
 - `styles.css` defines the responsive layout and highlight overlay.
-- `script.js` handles image selection, highlighting, notes, and counters.
+- `script.js` handles image selection, highlighting, notes, exports, saved project codes, and counters.
 - `assets/` contains the bundled example images.
 
 Uploaded images and highlights remain in the browser and are not sent anywhere.
+
+Project folders include:
+
+- `*-source-picture.png` for restoring the original picture.
+- `*-highlighted-picture.png` for a shareable marked-up picture.
+- `*-highlight-notes.csv` for Excel-compatible note data.
+- `highlight-project-code.json` for restoring circle positions, store details, dates, authors, and notes.
+
+Project-code files store highlight positions as image-relative percentages. That keeps circles accurate when the project folder is reloaded. Folder save/load works in browsers that support the File System Access API, such as Chrome and Edge. Other browsers download the project files separately.
