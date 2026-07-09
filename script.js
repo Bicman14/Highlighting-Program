@@ -2,12 +2,20 @@ const elements = {
   map: document.getElementById("map"),
   highlights: document.getElementById("highlights"),
   cursorPreview: document.getElementById("cursor-preview"),
+  mapTab: document.getElementById("map-tab"),
+  notesTab: document.getElementById("notes-tab"),
+  mapPanel: document.getElementById("map-panel"),
+  notesPanel: document.getElementById("notes-panel"),
   toggleColor: document.getElementById("toggle-color"),
   undoHighlight: document.getElementById("undo-highlight"),
   clearHighlights: document.getElementById("clear-highlights"),
   sizeRange: document.getElementById("size"),
   fileInput: document.getElementById("file"),
   pictureSelect: document.getElementById("pictures"),
+  selectedHighlightLabel: document.getElementById("selected-highlight-label"),
+  highlightNote: document.getElementById("highlight-note"),
+  saveNote: document.getElementById("save-note"),
+  notesList: document.getElementById("notes-list"),
   greenCount: document.getElementById("green-count"),
   redCount: document.getElementById("red-count"),
 };
@@ -22,6 +30,7 @@ const uploadedImages = new Map();
 let currentColor = "green";
 let diameter = elements.sizeRange.valueAsNumber;
 let highlightId = 0;
+let selectedHighlight = null;
 
 function getCounts() {
   return {
@@ -36,8 +45,83 @@ function updateCounter() {
   elements.redCount.textContent = counts.red;
 }
 
+function getHighlightLabel(highlight) {
+  const color = highlight.classList.contains("red") ? "red" : "green";
+  return `Highlight ${highlight.dataset.number} (${color})`;
+}
+
+function setActiveTab(activeTab) {
+  const showNotes = activeTab === "notes";
+
+  elements.mapTab.classList.toggle("active", !showNotes);
+  elements.notesTab.classList.toggle("active", showNotes);
+  elements.mapTab.setAttribute("aria-selected", String(!showNotes));
+  elements.notesTab.setAttribute("aria-selected", String(showNotes));
+  elements.mapPanel.classList.toggle("active", !showNotes);
+  elements.notesPanel.classList.toggle("active", showNotes);
+  elements.mapPanel.hidden = showNotes;
+  elements.notesPanel.hidden = !showNotes;
+}
+
+function renderNotesList() {
+  const highlightsWithNotes = [...elements.highlights.querySelectorAll(".highlight")]
+    .filter((highlight) => highlight.dataset.note?.trim());
+
+  elements.notesList.replaceChildren();
+
+  if (highlightsWithNotes.length === 0) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "empty-state";
+    emptyState.textContent = "No notes have been added yet.";
+    elements.notesList.appendChild(emptyState);
+    return;
+  }
+
+  for (const highlight of highlightsWithNotes) {
+    const noteButton = document.createElement("button");
+    noteButton.className = "note-card";
+    noteButton.type = "button";
+    noteButton.dataset.highlightId = highlight.id;
+    noteButton.innerHTML = `
+      <span class="note-title">${getHighlightLabel(highlight)}</span>
+      <span class="note-body"></span>
+    `;
+    noteButton.querySelector(".note-body").textContent = highlight.dataset.note;
+    elements.notesList.appendChild(noteButton);
+  }
+}
+
+function setSelectedHighlight(highlight) {
+  selectedHighlight?.classList.remove("selected");
+  selectedHighlight = highlight;
+
+  if (!selectedHighlight) {
+    elements.selectedHighlightLabel.textContent = "Select a highlight to add a note.";
+    elements.highlightNote.value = "";
+    elements.highlightNote.disabled = true;
+    elements.saveNote.disabled = true;
+    return;
+  }
+
+  selectedHighlight.classList.add("selected");
+  elements.selectedHighlightLabel.textContent = getHighlightLabel(selectedHighlight);
+  elements.highlightNote.value = selectedHighlight.dataset.note || "";
+  elements.highlightNote.disabled = false;
+  elements.saveNote.disabled = false;
+}
+
+function locateHighlight(highlight) {
+  setSelectedHighlight(highlight);
+  highlight.classList.remove("located");
+  void highlight.offsetWidth;
+  highlight.classList.add("located");
+  elements.map.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+}
+
 function clearHighlights() {
   elements.highlights.replaceChildren();
+  setSelectedHighlight(null);
+  renderNotesList();
   updateCounter();
 }
 
@@ -49,6 +133,11 @@ function setPreviewPosition(event) {
 }
 
 function placeHighlight(event) {
+  if (event.target.classList.contains("highlight")) {
+    setSelectedHighlight(event.target);
+    return;
+  }
+
   const bounds = elements.highlights.getBoundingClientRect();
   const highlight = document.createElement("div");
   const xPercent = ((event.clientX - bounds.left) / bounds.width) * 100;
@@ -56,6 +145,9 @@ function placeHighlight(event) {
 
   highlightId += 1;
   highlight.id = `highlight-${highlightId}`;
+  highlight.dataset.number = highlightId;
+  highlight.tabIndex = 0;
+  highlight.setAttribute("role", "button");
   highlight.classList.add("highlight", currentColor);
   highlight.style.left = `${xPercent}%`;
   highlight.style.top = `${yPercent}%`;
@@ -63,6 +155,8 @@ function placeHighlight(event) {
   highlight.style.height = `${diameter}px`;
 
   elements.highlights.appendChild(highlight);
+  highlight.setAttribute("aria-label", getHighlightLabel(highlight));
+  setSelectedHighlight(highlight);
   updateCounter();
 }
 
@@ -73,7 +167,17 @@ function toggleColor() {
 }
 
 function undoHighlight() {
-  elements.highlights.lastElementChild?.remove();
+  const highlight = elements.highlights.lastElementChild;
+
+  if (highlight) {
+    if (highlight === selectedHighlight) {
+      setSelectedHighlight(null);
+    }
+
+    highlight.remove();
+    renderNotesList();
+  }
+
   updateCounter();
 }
 
@@ -123,6 +227,16 @@ function changeImage() {
 }
 
 elements.highlights.addEventListener("pointerdown", placeHighlight);
+elements.highlights.addEventListener("keydown", (event) => {
+  if (!event.target.classList.contains("highlight")) {
+    return;
+  }
+
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    setSelectedHighlight(event.target);
+  }
+});
 elements.highlights.addEventListener("pointermove", setPreviewPosition);
 elements.highlights.addEventListener("pointerleave", () => {
   elements.cursorPreview.style.display = "none";
@@ -130,6 +244,33 @@ elements.highlights.addEventListener("pointerleave", () => {
 elements.toggleColor.addEventListener("click", toggleColor);
 elements.undoHighlight.addEventListener("click", undoHighlight);
 elements.clearHighlights.addEventListener("click", clearHighlights);
+elements.mapTab.addEventListener("click", () => setActiveTab("map"));
+elements.notesTab.addEventListener("click", () => {
+  renderNotesList();
+  setActiveTab("notes");
+});
+elements.saveNote.addEventListener("click", () => {
+  if (!selectedHighlight) {
+    return;
+  }
+
+  selectedHighlight.dataset.note = elements.highlightNote.value.trim();
+  selectedHighlight.classList.toggle("has-note", Boolean(selectedHighlight.dataset.note));
+  renderNotesList();
+});
+elements.notesList.addEventListener("click", (event) => {
+  const noteCard = event.target.closest(".note-card");
+
+  if (!noteCard) {
+    return;
+  }
+
+  const highlight = document.getElementById(noteCard.dataset.highlightId);
+
+  if (highlight) {
+    locateHighlight(highlight);
+  }
+});
 elements.sizeRange.addEventListener("input", () => {
   diameter = elements.sizeRange.valueAsNumber;
   elements.cursorPreview.style.width = `${diameter}px`;
@@ -141,3 +282,4 @@ window.addEventListener("beforeunload", resetUploadedImages);
 
 elements.cursorPreview.style.width = `${diameter}px`;
 elements.cursorPreview.style.height = `${diameter}px`;
+renderNotesList();

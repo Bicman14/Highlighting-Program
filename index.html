@@ -16,7 +16,7 @@
       <section class="map-container" aria-label="Interactive map">
         <div class="map-frame">
           <img src="assets/firemap.png" alt="Fire extinguisher map" id="map" />
-          <div id="highlights" aria-hidden="true"></div>
+          <div id="highlights" aria-label="Highlights"></div>
           <div id="cursor-preview" aria-hidden="true"></div>
         </div>
       </section>
@@ -24,31 +24,74 @@
       <aside class="controls" aria-label="Highlight controls">
         <h1>Highlighting Program</h1>
 
-        <button id="toggle-color" type="button">Highlight color: Green</button>
-        <button id="undo-highlight" type="button">Undo last highlight</button>
-        <button id="clear-highlights" type="button">Clear all highlights</button>
-
-        <div class="field">
-          <label for="size">Highlight size</label>
-          <input value="45" type="range" id="size" min="10" max="100" />
+        <div class="tabs" role="tablist" aria-label="Sidebar views">
+          <button
+            class="tab-button active"
+            id="map-tab"
+            type="button"
+            role="tab"
+            aria-controls="map-panel"
+            aria-selected="true"
+          >
+            Map
+          </button>
+          <button
+            class="tab-button"
+            id="notes-tab"
+            type="button"
+            role="tab"
+            aria-controls="notes-panel"
+            aria-selected="false"
+          >
+            Notes
+          </button>
         </div>
 
-        <div class="field">
-          <label for="file">Upload images</label>
-          <input type="file" id="file" accept="image/png, image/jpeg" multiple />
+        <div class="tab-panel active" id="map-panel" role="tabpanel" aria-labelledby="map-tab">
+          <button id="toggle-color" type="button">Highlight color: Green</button>
+          <button id="undo-highlight" type="button">Undo last highlight</button>
+          <button id="clear-highlights" type="button">Clear all highlights</button>
+
+          <div class="field">
+            <label for="size">Highlight size</label>
+            <input value="45" type="range" id="size" min="10" max="100" />
+          </div>
+
+          <div class="field">
+            <label for="file">Upload images</label>
+            <input type="file" id="file" accept="image/png, image/jpeg" multiple />
+          </div>
+
+          <div class="field">
+            <label for="pictures">Select uploaded image</label>
+            <select id="pictures" disabled>
+              <option value="">No uploaded images</option>
+            </select>
+          </div>
+
+          <div class="field note-editor">
+            <label for="highlight-note">Selected highlight note</label>
+            <p id="selected-highlight-label">Select a highlight to add a note.</p>
+            <textarea
+              id="highlight-note"
+              rows="5"
+              placeholder="Add a note for the selected highlight"
+              disabled
+            ></textarea>
+            <button id="save-note" type="button" disabled>Save note</button>
+          </div>
+
+          <p class="counter" aria-live="polite">
+            <span><strong class="green-text" id="green-count">0</strong> green</span>
+            <span><strong class="red-text" id="red-count">0</strong> red</span>
+          </p>
         </div>
 
-        <div class="field">
-          <label for="pictures">Select uploaded image</label>
-          <select id="pictures" disabled>
-            <option value="">No uploaded images</option>
-          </select>
+        <div class="tab-panel" id="notes-panel" role="tabpanel" aria-labelledby="notes-tab" hidden>
+          <h2>Highlight Notes</h2>
+          <p class="helper-text">Select a note to locate its circle on the map.</p>
+          <div id="notes-list" class="notes-list" aria-live="polite"></div>
         </div>
-
-        <p class="counter" aria-live="polite">
-          <span><strong class="green-text" id="green-count">0</strong> green</span>
-          <span><strong class="red-text" id="red-count">0</strong> red</span>
-        </p>
       </aside>
     </main>
   </body>

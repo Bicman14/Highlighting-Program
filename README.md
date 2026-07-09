@@ -8,9 +8,12 @@ No build step or dependencies are required. Clone the repository and open `index
 
 ## Controls
 
-- Click the image to place a highlight.
+- Click the image to place a highlight, or click an existing highlight to select it.
 - Switch between green and red highlights with **Highlight color**.
 - Adjust the circle diameter with **Highlight size**.
+- Add notes to the selected highlight from the **Map** tab.
+- Open the **Notes** tab to review saved notes.
+- Select a saved note to locate its highlight on the image.
 - Remove the latest mark with **Undo last highlight**.
 - Remove every mark with **Clear all highlights**.
 - Upload one or more PNG or JPEG files and choose between them using the image selector.
@@ -19,7 +22,7 @@ No build step or dependencies are required. Clone the repository and open `index
 
 - `index.html` contains the application markup.
 - `styles.css` defines the responsive layout and highlight overlay.
-- `script.js` handles image selection, highlighting, and counters.
+- `script.js` handles image selection, highlighting, notes, and counters.
 - `assets/` contains the bundled example images.
 
 Uploaded images and highlights remain in the browser and are not sent anywhere.
