@@ -18,7 +18,7 @@ The dropdown resets on every new browser session. It only lists pictures that ha
 
 - Click the image to place a highlight, or click an existing highlight to select it.
 - Switch between green and red highlights with **Highlight color**.
-- Adjust the circle diameter with **Highlight size**.
+- Adjust the circle diameter with **Highlight size** and use the inline preview to see the exact circle size.
 - Add notes to the selected highlight from the **Map** tab.
 - Open the **Notes** tab to review saved notes.
 - Select a saved note to locate its highlight on the image.

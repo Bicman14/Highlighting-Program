@@ -10,6 +10,8 @@ const elements = {
   undoHighlight: document.getElementById("undo-highlight"),
   clearHighlights: document.getElementById("clear-highlights"),
   sizeRange: document.getElementById("size"),
+  sizePreview: document.getElementById("size-preview"),
+  sizeValue: document.getElementById("size-value"),
   fileInput: document.getElementById("file"),
   pictureSelect: document.getElementById("pictures"),
   selectedHighlightLabel: document.getElementById("selected-highlight-label"),
@@ -44,6 +46,19 @@ function updateCounter() {
   const counts = getCounts();
   elements.greenCount.textContent = counts.green;
   elements.redCount.textContent = counts.red;
+}
+
+function updateSizePreview() {
+  diameter = elements.sizeRange.valueAsNumber;
+  elements.cursorPreview.style.width = `${diameter}px`;
+  elements.cursorPreview.style.height = `${diameter}px`;
+  elements.sizePreview.style.width = `${diameter}px`;
+  elements.sizePreview.style.height = `${diameter}px`;
+  elements.sizeValue.textContent = diameter;
+}
+
+function updatePreviewColor() {
+  elements.sizePreview.classList.toggle("red", currentColor === "red");
 }
 
 function getHighlightLabel(highlight) {
@@ -165,6 +180,7 @@ function toggleColor() {
   currentColor = currentColor === "green" ? "red" : "green";
   const label = currentColor[0].toUpperCase() + currentColor.slice(1);
   elements.toggleColor.textContent = `Highlight color: ${label}`;
+  updatePreviewColor();
 }
 
 function undoHighlight() {
@@ -306,16 +322,12 @@ elements.notesList.addEventListener("click", (event) => {
     locateHighlight(highlight);
   }
 });
-elements.sizeRange.addEventListener("input", () => {
-  diameter = elements.sizeRange.valueAsNumber;
-  elements.cursorPreview.style.width = `${diameter}px`;
-  elements.cursorPreview.style.height = `${diameter}px`;
-});
+elements.sizeRange.addEventListener("input", updateSizePreview);
 elements.fileInput.addEventListener("change", loadUploadedImages);
 elements.pictureSelect.addEventListener("change", changeImage);
 window.addEventListener("beforeunload", revokeUploadedImages);
 
-elements.cursorPreview.style.width = `${diameter}px`;
-elements.cursorPreview.style.height = `${diameter}px`;
+updateSizePreview();
+updatePreviewColor();
 registerInitialPicture();
 renderNotesList();

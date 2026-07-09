@@ -184,6 +184,45 @@ textarea {
   font-weight: 600;
 }
 
+.size-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.size-preview-wrap {
+  display: grid;
+  place-items: center;
+  width: 6.5rem;
+  height: 6.5rem;
+  border: 1px dashed #b7bcc5;
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(45deg, #eef1f5 25%, transparent 25%),
+    linear-gradient(-45deg, #eef1f5 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eef1f5 75%),
+    linear-gradient(-45deg, transparent 75%, #eef1f5 75%);
+  background-position:
+    0 0,
+    0 0.5rem,
+    0.5rem -0.5rem,
+    -0.5rem 0;
+  background-size: 1rem 1rem;
+}
+
+#size-preview {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: rgb(0 128 0 / 50%);
+  outline: 1px solid rgb(0 0 0 / 20%);
+}
+
+#size-preview.red {
+  background: rgb(255 0 0 / 50%);
+}
+
 .note-editor p,
 .helper-text,
 .empty-state {

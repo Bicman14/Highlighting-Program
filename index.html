@@ -54,7 +54,15 @@
 
           <div class="field">
             <label for="size">Highlight size</label>
-            <input value="45" type="range" id="size" min="10" max="100" />
+            <div class="size-control">
+              <input value="45" type="range" id="size" min="10" max="100" />
+              <div class="size-preview-wrap" aria-hidden="true">
+                <div id="size-preview"></div>
+              </div>
+            </div>
+            <p class="helper-text">
+              Preview: <span id="size-value">45</span>px circle
+            </p>
           </div>
 
           <div class="field">
