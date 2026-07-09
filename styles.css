@@ -1,7 +1,34 @@
 :root {
-  color: #202124;
+  color: var(--text);
   font-family: system-ui, sans-serif;
-  background: #f4f5f7;
+  background: var(--page-bg);
+  --page-bg: #f4f5f7;
+  --panel-bg: #fff;
+  --section-bg: #fbfcfd;
+  --text: #202124;
+  --muted: #5f6673;
+  --border: #d7dbe1;
+  --control-bg: #fff;
+  --control-hover: #eef1f5;
+  --active-bg: #dbeafe;
+  --active-text: #1d4ed8;
+  --active-border: #2563eb;
+  --map-bg: #e7ebf1;
+}
+
+:root[data-theme="dark"] {
+  --page-bg: #0f172a;
+  --panel-bg: #111827;
+  --section-bg: #1f2937;
+  --text: #e5e7eb;
+  --muted: #a9b4c7;
+  --border: #374151;
+  --control-bg: #0f172a;
+  --control-hover: #263244;
+  --active-bg: #1e3a8a;
+  --active-text: #dbeafe;
+  --active-border: #60a5fa;
+  --map-bg: #020617;
 }
 
 * {
@@ -11,6 +38,7 @@
 body {
   margin: 0;
   overflow: hidden;
+  background: var(--page-bg);
 }
 
 button,
@@ -29,28 +57,39 @@ input[type="file"] {
 
 button {
   padding: 0.5rem 0.65rem;
-  border: 1px solid #b7bcc5;
+  border: 1px solid var(--border);
   border-radius: 0.4rem;
-  background: #fff;
+  background: var(--control-bg);
+  color: var(--text);
   cursor: pointer;
 }
 
 button:hover {
-  background: #eef1f5;
+  background: var(--control-hover);
 }
 
 input[type="text"] {
-  border: 1px solid #b7bcc5;
+  border: 1px solid var(--border);
   border-radius: 0.4rem;
   padding: 0.5rem 0.6rem;
+  background: var(--control-bg);
+  color: var(--text);
 }
 
 textarea {
   width: 100%;
   resize: vertical;
-  border: 1px solid #b7bcc5;
+  border: 1px solid var(--border);
   border-radius: 0.4rem;
   padding: 0.5rem 0.6rem;
+  background: var(--control-bg);
+  color: var(--text);
+}
+
+select,
+input[type="file"] {
+  color: var(--text);
+  background: var(--control-bg);
 }
 
 .app {
@@ -61,27 +100,27 @@ textarea {
 }
 
 .map-container {
-  display: grid;
-  place-items: center;
   min-width: 0;
+  min-height: 0;
   padding: clamp(0.35rem, 1vw, 1rem);
-  overflow: auto;
+  overflow: hidden;
+  background: var(--map-bg);
 }
 
 .map-frame {
   position: relative;
-  display: inline-block;
-  max-width: 100%;
+  display: grid;
+  width: 100%;
+  height: 100%;
   line-height: 0;
   cursor: crosshair;
 }
 
 #map {
   display: block;
-  max-width: 100%;
-  max-height: calc(100dvh - 1rem);
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
 }
 
 #highlights,
@@ -148,8 +187,8 @@ textarea {
   gap: 0.55rem;
   min-height: 0;
   padding: 0.75rem;
-  border-left: 1px solid #d7dbe1;
-  background: #fff;
+  border-left: 1px solid var(--border);
+  background: var(--panel-bg);
   overflow: hidden;
 }
 
@@ -170,13 +209,28 @@ textarea {
 }
 
 .sidebar-header p {
-  color: #5f6673;
+  color: var(--muted);
   font-size: 0.78rem;
 }
 
 .small-button {
   width: auto;
   padding-inline: 0.55rem;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.35rem;
 }
 
 .tabs {
@@ -186,9 +240,9 @@ textarea {
 }
 
 .tab-button.active {
-  border-color: #2563eb;
-  background: #dbeafe;
-  color: #1d4ed8;
+  border-color: var(--active-border);
+  background: var(--active-bg);
+  color: var(--active-text);
   font-weight: 700;
 }
 
@@ -221,9 +275,9 @@ textarea {
   display: grid;
   gap: 0.35rem;
   padding: 0.55rem;
-  border: 1px solid #d7dbe1;
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
-  background: #fbfcfd;
+  background: var(--section-bg);
 }
 
 .button-row {
@@ -244,13 +298,13 @@ textarea {
   place-items: center;
   width: 4.25rem;
   height: 4.25rem;
-  border: 1px dashed #b7bcc5;
+  border: 1px dashed var(--border);
   border-radius: 0.5rem;
   background:
-    linear-gradient(45deg, #eef1f5 25%, transparent 25%),
-    linear-gradient(-45deg, #eef1f5 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #eef1f5 75%),
-    linear-gradient(-45deg, transparent 75%, #eef1f5 75%);
+    linear-gradient(45deg, var(--control-hover) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--control-hover) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--control-hover) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--control-hover) 75%);
   background-position:
     0 0,
     0 0.5rem,
@@ -275,7 +329,7 @@ textarea {
 .helper-text,
 .empty-state {
   margin: 0;
-  color: #5f6673;
+  color: var(--muted);
   font-size: 0.78rem;
 }
 
@@ -297,12 +351,12 @@ textarea {
 }
 
 .note-meta {
-  color: #5f6673;
+  color: var(--muted);
   font-size: 0.85rem;
 }
 
 .note-body {
-  color: #374151;
+  color: var(--text);
   overflow-wrap: anywhere;
 }
 
@@ -311,7 +365,7 @@ textarea {
   justify-content: space-between;
   margin: 0;
   padding-top: 0.5rem;
-  border-top: 1px solid #d7dbe1;
+  border-top: 1px solid var(--border);
 }
 
 dialog {
@@ -320,6 +374,8 @@ dialog {
   border-radius: 0.75rem;
   padding: 0;
   box-shadow: 0 1rem 3rem rgb(0 0 0 / 25%);
+  background: var(--panel-bg);
+  color: var(--text);
 }
 
 dialog::backdrop {
@@ -374,8 +430,12 @@ dialog::backdrop {
     min-height: 100dvh;
   }
 
+  .map-container {
+    height: 60dvh;
+  }
+
   .controls {
-    border-top: 1px solid #d7dbe1;
+    border-top: 1px solid var(--border);
     border-left: 0;
     overflow: visible;
   }

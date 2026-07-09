@@ -6,10 +6,13 @@ const elements = {
   sessionStoreLocation: document.getElementById("session-store-location"),
   sessionSummary: document.getElementById("session-summary"),
   editSession: document.getElementById("edit-session"),
+  themeToggle: document.getElementById("theme-toggle"),
   unsavedDialog: document.getElementById("unsaved-dialog"),
   cancelRiskyAction: document.getElementById("cancel-risky-action"),
   confirmRiskyAction: document.getElementById("confirm-risky-action"),
   map: document.getElementById("map"),
+  mapContainer: document.querySelector(".map-container"),
+  mapFrame: document.querySelector(".map-frame"),
   highlights: document.getElementById("highlights"),
   cursorPreview: document.getElementById("cursor-preview"),
   mapTab: document.getElementById("map-tab"),
@@ -82,6 +85,46 @@ function updateSizePreview() {
 
 function updatePreviewColor() {
   elements.sizePreview.classList.toggle("red", currentColor === "red");
+}
+
+function fitMapToAvailableArea() {
+  if (!elements.map.naturalWidth || !elements.map.naturalHeight) {
+    return;
+  }
+
+  const containerBounds = elements.mapContainer.getBoundingClientRect();
+
+  if (!containerBounds.width || !containerBounds.height) {
+    return;
+  }
+
+  const imageAspect = elements.map.naturalWidth / elements.map.naturalHeight;
+  const containerAspect = containerBounds.width / containerBounds.height;
+  let width = containerBounds.width;
+  let height = containerBounds.height;
+
+  if (containerAspect > imageAspect) {
+    width = height * imageAspect;
+  } else {
+    height = width / imageAspect;
+  }
+
+  elements.mapFrame.style.width = `${Math.floor(width)}px`;
+  elements.mapFrame.style.height = `${Math.floor(height)}px`;
+}
+
+function toggleTheme() {
+  const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = nextTheme;
+  updateThemeToggle();
+}
+
+function updateThemeToggle() {
+  const isDark = document.documentElement.dataset.theme === "dark";
+  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+  elements.themeToggle.textContent = isDark ? "☀️" : "🌙";
+  elements.themeToggle.setAttribute("aria-label", label);
+  elements.themeToggle.title = label;
 }
 
 function getCurrentPicture() {
@@ -297,7 +340,7 @@ function placeHighlight(event) {
 function toggleColor() {
   currentColor = currentColor === "green" ? "red" : "green";
   const label = currentColor[0].toUpperCase() + currentColor.slice(1);
-  elements.toggleColor.textContent = `Highlight color: ${label}`;
+  elements.toggleColor.textContent = `Color: ${label}`;
   updatePreviewColor();
 }
 
@@ -425,6 +468,7 @@ function loadUploadedImages() {
 }
 
 function showImage(selectedImage) {
+  elements.map.addEventListener("load", fitMapToAvailableArea, { once: true });
   elements.map.src = selectedImage.url;
   elements.map.alt = selectedImage.alt;
   activePictureId = elements.pictureSelect.value;
@@ -745,6 +789,7 @@ elements.highlights.addEventListener("pointerleave", () => {
   elements.cursorPreview.style.display = "none";
 });
 elements.toggleColor.addEventListener("click", toggleColor);
+elements.themeToggle.addEventListener("click", toggleTheme);
 elements.undoHighlight.addEventListener("click", undoHighlight);
 elements.clearHighlights.addEventListener("click", () => {
   runRiskyAction(() => {
@@ -812,10 +857,18 @@ window.addEventListener("beforeunload", (event) => {
   }
 });
 window.addEventListener("pagehide", revokeUploadedImages);
+window.addEventListener("resize", fitMapToAvailableArea);
 
 updateSizePreview();
 updatePreviewColor();
 registerInitialPicture();
 renderNotesList();
 updateSessionSummary();
+document.documentElement.dataset.theme = "light";
+updateThemeToggle();
+if (elements.map.complete) {
+  fitMapToAvailableArea();
+} else {
+  elements.map.addEventListener("load", fitMapToAvailableArea, { once: true });
+}
 elements.sessionDialog.showModal();

@@ -17,6 +17,7 @@ The dropdown resets on every new browser session. It only lists pictures that ha
 ## Controls
 
 - Enter your name, store number, and location when the session starts.
+- Use the sun/moon button to switch between light and dark mode.
 - Click the image to place a highlight, or click an existing highlight to select it.
 - Switch between green and red highlights with **Highlight color**.
 - Adjust the circle diameter with **Highlight size** and use the inline preview to see the exact circle size.
@@ -27,6 +28,7 @@ The dropdown resets on every new browser session. It only lists pictures that ha
 - Remove every mark with **Clear all highlights**.
 - Choose a bundled image from **Built-in pictures** for quick use.
 - Choose or upload a picture from a local folder.
+- Pictures scale to fit the available map area so the page does not require vertical scrolling on normal desktop layouts.
 - Use **Session picture history** to switch between pictures displayed during the current session.
 - Save one named project folder with the source picture, highlighted picture, Excel CSV, and restore JSON.
 - Reload a saved project folder to restore the picture, circle positions, notes, and session details.
