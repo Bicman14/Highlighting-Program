@@ -95,10 +95,7 @@ function updateCounter() {
   const counts = getCounts();
   elements.colorCounts.replaceChildren();
 
-  const colorsToShow = [...new Set([...getAvailableColors(), ...counts.keys()])];
-
-  for (const color of colorsToShow) {
-    const count = counts.get(color) || 0;
+  for (const [color, count] of counts) {
     const item = document.createElement("span");
     item.className = "color-count";
     item.innerHTML = `
