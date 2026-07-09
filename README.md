@@ -6,6 +6,14 @@ A lightweight browser tool for marking and counting points of interest on a floo
 
 No build step or dependencies are required. Clone the repository and open `index.html` in a modern browser.
 
+## Picture selection
+
+Use **Choose or upload picture** to select an image from a local folder. The selected image is added to the session picture history dropdown after it is displayed on the page.
+
+The browser cannot permanently save local files into the repository's `assets/` folder by itself. To keep a picture with the project, manually copy it into `assets/` or another project folder.
+
+The dropdown resets on every new browser session. It only lists pictures that have already been displayed during the current session, so large folders are not loaded into the page all at once.
+
 ## Controls
 
 - Click the image to place a highlight, or click an existing highlight to select it.
@@ -16,7 +24,8 @@ No build step or dependencies are required. Clone the repository and open `index
 - Select a saved note to locate its highlight on the image.
 - Remove the latest mark with **Undo last highlight**.
 - Remove every mark with **Clear all highlights**.
-- Upload one or more PNG or JPEG files and choose between them using the image selector.
+- Choose or upload a picture from a local folder.
+- Use **Session picture history** to switch between pictures displayed during the current session.
 
 ## Project structure
 

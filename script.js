@@ -26,11 +26,12 @@ for (const [name, element] of Object.entries(elements)) {
   }
 }
 
-const uploadedImages = new Map();
+const sessionPictures = new Map();
 let currentColor = "green";
 let diameter = elements.sizeRange.valueAsNumber;
 let highlightId = 0;
 let selectedHighlight = null;
+let sessionPictureId = 0;
 
 function getCounts() {
   return {
@@ -181,15 +182,6 @@ function undoHighlight() {
   updateCounter();
 }
 
-function resetUploadedImages() {
-  for (const objectUrl of uploadedImages.values()) {
-    URL.revokeObjectURL(objectUrl);
-  }
-
-  uploadedImages.clear();
-  elements.pictureSelect.replaceChildren();
-}
-
 function addSelectOption(value, label) {
   const option = document.createElement("option");
   option.value = value;
@@ -197,32 +189,75 @@ function addSelectOption(value, label) {
   elements.pictureSelect.appendChild(option);
 }
 
-function loadUploadedImages() {
-  resetUploadedImages();
-
-  for (const file of elements.fileInput.files) {
-    const objectUrl = URL.createObjectURL(file);
-    uploadedImages.set(file.name, objectUrl);
-    addSelectOption(file.name, file.name);
-  }
-
-  elements.pictureSelect.disabled = uploadedImages.size === 0;
-
-  if (uploadedImages.size > 0) {
-    elements.pictureSelect.selectedIndex = 0;
-    changeImage();
-  } else {
-    addSelectOption("", "No uploaded images");
+function revokeUploadedImages() {
+  for (const picture of sessionPictures.values()) {
+    if (picture.objectUrl) {
+      URL.revokeObjectURL(picture.url);
+    }
   }
 }
 
+function registerDisplayedPicture(file) {
+  sessionPictureId += 1;
+  const sourceId = `session:${sessionPictureId}`;
+  const objectUrl = URL.createObjectURL(file);
+
+  sessionPictures.set(sourceId, {
+    name: file.name,
+    url: objectUrl,
+    alt: `Selected image: ${file.name}`,
+    objectUrl: true,
+  });
+
+  if (sessionPictures.size === 1) {
+    elements.pictureSelect.replaceChildren();
+  }
+
+  addSelectOption(sourceId, file.name);
+  elements.pictureSelect.disabled = false;
+  elements.pictureSelect.value = sourceId;
+  return sessionPictures.get(sourceId);
+}
+
+function registerInitialPicture() {
+  const sourceId = "initial-picture";
+
+  sessionPictures.set(sourceId, {
+    name: elements.map.alt,
+    url: elements.map.getAttribute("src"),
+    alt: elements.map.alt,
+    objectUrl: false,
+  });
+
+  elements.pictureSelect.replaceChildren();
+  addSelectOption(sourceId, elements.map.alt);
+  elements.pictureSelect.disabled = false;
+  elements.pictureSelect.value = sourceId;
+}
+
+function loadUploadedImages() {
+  const files = [...elements.fileInput.files];
+
+  if (files.length === 0) {
+    return;
+  }
+
+  const selectedImage = registerDisplayedPicture(files[0]);
+  showImage(selectedImage);
+  elements.fileInput.value = "";
+}
+
+function showImage(selectedImage) {
+  elements.map.src = selectedImage.url;
+  elements.map.alt = selectedImage.alt;
+  clearHighlights();
+}
+
 function changeImage() {
-  const selectedImage = uploadedImages.get(elements.pictureSelect.value);
+  const selectedImage = sessionPictures.get(elements.pictureSelect.value);
 
   if (selectedImage) {
-    elements.map.src = selectedImage;
-    elements.map.alt = `Uploaded image: ${elements.pictureSelect.value}`;
-    clearHighlights();
+    showImage(selectedImage);
   }
 }
 
@@ -278,8 +313,9 @@ elements.sizeRange.addEventListener("input", () => {
 });
 elements.fileInput.addEventListener("change", loadUploadedImages);
 elements.pictureSelect.addEventListener("change", changeImage);
-window.addEventListener("beforeunload", resetUploadedImages);
+window.addEventListener("beforeunload", revokeUploadedImages);
 
 elements.cursorPreview.style.width = `${diameter}px`;
 elements.cursorPreview.style.height = `${diameter}px`;
+registerInitialPicture();
 renderNotesList();

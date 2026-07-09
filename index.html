@@ -58,14 +58,15 @@
           </div>
 
           <div class="field">
-            <label for="file">Upload images</label>
-            <input type="file" id="file" accept="image/png, image/jpeg" multiple />
+            <label for="file">Choose or upload picture</label>
+            <input type="file" id="file" accept="image/*" />
+            <p class="helper-text">Selected pictures stay available only for this browser session.</p>
           </div>
 
           <div class="field">
-            <label for="pictures">Select uploaded image</label>
+            <label for="pictures">Session picture history</label>
             <select id="pictures" disabled>
-              <option value="">No uploaded images</option>
+              <option value="">No pictures displayed this session</option>
             </select>
           </div>
 
