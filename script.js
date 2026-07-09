@@ -1,4 +1,14 @@
 const elements = {
+  sessionDialog: document.getElementById("session-dialog"),
+  sessionForm: document.getElementById("session-form"),
+  sessionName: document.getElementById("session-name"),
+  sessionStoreNumber: document.getElementById("session-store-number"),
+  sessionStoreLocation: document.getElementById("session-store-location"),
+  sessionSummary: document.getElementById("session-summary"),
+  editSession: document.getElementById("edit-session"),
+  unsavedDialog: document.getElementById("unsaved-dialog"),
+  cancelRiskyAction: document.getElementById("cancel-risky-action"),
+  confirmRiskyAction: document.getElementById("confirm-risky-action"),
   map: document.getElementById("map"),
   highlights: document.getElementById("highlights"),
   cursorPreview: document.getElementById("cursor-preview"),
@@ -16,16 +26,10 @@ const elements = {
   fileInput: document.getElementById("file"),
   pictureSelect: document.getElementById("pictures"),
   selectedHighlightLabel: document.getElementById("selected-highlight-label"),
-  noteAuthor: document.getElementById("note-author"),
-  storeLocation: document.getElementById("store-location"),
-  customStoreFields: document.getElementById("custom-store-fields"),
-  customStoreNumber: document.getElementById("custom-store-number"),
-  customStoreLocation: document.getElementById("custom-store-location"),
   highlightNote: document.getElementById("highlight-note"),
   noteTimestamp: document.getElementById("note-timestamp"),
   saveNote: document.getElementById("save-note"),
-  exportCsv: document.getElementById("export-csv"),
-  exportImage: document.getElementById("export-image"),
+  projectFolderName: document.getElementById("project-folder-name"),
   saveProject: document.getElementById("save-project"),
   loadProjectFolder: document.getElementById("load-project-folder"),
   notesList: document.getElementById("notes-list"),
@@ -45,6 +49,14 @@ let diameter = elements.sizeRange.valueAsNumber;
 let highlightId = 0;
 let selectedHighlight = null;
 let sessionPictureId = 0;
+let activePictureId = "";
+let hasUnsavedChanges = false;
+let pendingRiskyAction = null;
+const sessionDetails = {
+  name: "",
+  storeNumber: "",
+  storeLocation: "",
+};
 
 function getCounts() {
   return {
@@ -85,55 +97,50 @@ function getHighlightColor(highlight) {
   return highlight.classList.contains("red") ? "red" : "green";
 }
 
-function getStoreDetails() {
-  const [storeNumber = "", storeLocation = ""] = elements.storeLocation.value.split("|");
-
-  if (storeNumber === "custom") {
-    return {
-      storeNumber: elements.customStoreNumber.value.trim(),
-      storeLocation: elements.customStoreLocation.value.trim(),
-    };
-  }
-
-  return { storeNumber, storeLocation };
-}
-
-function setStoreDetails(storeNumber, storeLocation) {
-  const matchingOption = [...elements.storeLocation.options].find((option) => {
-    const [optionStoreNumber, optionLocation] = option.value.split("|");
-    return optionStoreNumber === storeNumber && optionLocation === storeLocation;
-  });
-
-  if (matchingOption) {
-    elements.storeLocation.value = matchingOption.value;
-    elements.customStoreNumber.value = "";
-    elements.customStoreLocation.value = "";
-  } else if (storeNumber || storeLocation) {
-    elements.storeLocation.value = "custom|Custom Location";
-    elements.customStoreNumber.value = storeNumber || "";
-    elements.customStoreLocation.value = storeLocation || "";
-  } else {
-    elements.storeLocation.value = "";
-    elements.customStoreNumber.value = "";
-    elements.customStoreLocation.value = "";
-  }
-
-  updateCustomStoreFields();
-}
-
-function updateCustomStoreFields() {
-  const isCustomStore = elements.storeLocation.value.startsWith("custom|");
-  elements.customStoreFields.hidden = !isCustomStore;
-  elements.customStoreNumber.disabled = !isCustomStore || !selectedHighlight;
-  elements.customStoreLocation.disabled = !isCustomStore || !selectedHighlight;
-}
-
 function setNoteFieldsDisabled(disabled) {
-  elements.noteAuthor.disabled = disabled;
-  elements.storeLocation.disabled = disabled;
   elements.highlightNote.disabled = disabled;
   elements.saveNote.disabled = disabled;
-  updateCustomStoreFields();
+}
+
+function markUnsaved() {
+  hasUnsavedChanges = true;
+}
+
+function markExported() {
+  hasUnsavedChanges = false;
+}
+
+function updateSessionSummary() {
+  elements.sessionSummary.textContent = sessionDetails.name
+    ? `${sessionDetails.name} | Store ${sessionDetails.storeNumber} - ${sessionDetails.storeLocation}`
+    : "No session details yet.";
+}
+
+function saveSessionDetails() {
+  sessionDetails.name = elements.sessionName.value.trim();
+  sessionDetails.storeNumber = elements.sessionStoreNumber.value.trim();
+  sessionDetails.storeLocation = elements.sessionStoreLocation.value.trim();
+  updateSessionSummary();
+}
+
+function runRiskyAction(action) {
+  if (!hasUnsavedChanges) {
+    action();
+    return;
+  }
+
+  pendingRiskyAction = action;
+  elements.unsavedDialog.showModal();
+}
+
+function confirmRiskyAction() {
+  const action = pendingRiskyAction;
+  pendingRiskyAction = null;
+  elements.unsavedDialog.close();
+
+  if (action) {
+    action();
+  }
 }
 
 function getHighlightRecord(highlight) {
@@ -220,8 +227,6 @@ function setSelectedHighlight(highlight) {
 
   if (!selectedHighlight) {
     elements.selectedHighlightLabel.textContent = "Select a highlight to add a note.";
-    elements.noteAuthor.value = "";
-    setStoreDetails("", "");
     elements.highlightNote.value = "";
     elements.noteTimestamp.textContent = "No note saved yet.";
     setNoteFieldsDisabled(true);
@@ -230,11 +235,6 @@ function setSelectedHighlight(highlight) {
 
   selectedHighlight.classList.add("selected");
   elements.selectedHighlightLabel.textContent = getHighlightLabel(selectedHighlight);
-  elements.noteAuthor.value = selectedHighlight.dataset.author || "";
-  setStoreDetails(
-    selectedHighlight.dataset.storeNumber || "",
-    selectedHighlight.dataset.storeLocation || "",
-  );
   elements.highlightNote.value = selectedHighlight.dataset.note || "";
   elements.noteTimestamp.textContent = formatTimestamp(selectedHighlight.dataset.timestamp);
   setNoteFieldsDisabled(false);
@@ -290,6 +290,7 @@ function placeHighlight(event) {
   elements.highlights.appendChild(highlight);
   highlight.setAttribute("aria-label", getHighlightLabel(highlight));
   setSelectedHighlight(highlight);
+  markUnsaved();
   updateCounter();
 }
 
@@ -310,6 +311,7 @@ function undoHighlight() {
 
     highlight.remove();
     renderNotesList();
+    markUnsaved();
   }
 
   updateCounter();
@@ -386,6 +388,7 @@ function registerInitialPicture() {
   addSelectOption(sourceId, elements.map.alt);
   elements.pictureSelect.disabled = false;
   elements.pictureSelect.value = sourceId;
+  activePictureId = sourceId;
 }
 
 function registerBuiltInPicture(url, name) {
@@ -413,14 +416,18 @@ function loadUploadedImages() {
     return;
   }
 
-  const selectedImage = registerDisplayedPicture(files[0]);
-  showImage(selectedImage);
+  runRiskyAction(() => {
+    const selectedImage = registerDisplayedPicture(files[0]);
+    showImage(selectedImage);
+    markUnsaved();
+  });
   elements.fileInput.value = "";
 }
 
 function showImage(selectedImage) {
   elements.map.src = selectedImage.url;
   elements.map.alt = selectedImage.alt;
+  activePictureId = elements.pictureSelect.value;
   clearHighlights();
 }
 
@@ -429,21 +436,31 @@ function loadBuiltInPicture() {
     return;
   }
 
-  const selectedOption = elements.builtInPictures.selectedOptions[0];
-  const selectedImage = registerBuiltInPicture(
-    elements.builtInPictures.value,
-    selectedOption.textContent,
-  );
+  const selectedValue = elements.builtInPictures.value;
+  const selectedLabel = elements.builtInPictures.selectedOptions[0].textContent;
 
-  showImage(selectedImage);
+  runRiskyAction(() => {
+    const selectedImage = registerBuiltInPicture(selectedValue, selectedLabel);
+    showImage(selectedImage);
+    markUnsaved();
+  });
   elements.builtInPictures.value = "";
 }
 
 function changeImage() {
-  const selectedImage = sessionPictures.get(elements.pictureSelect.value);
+  const selectedValue = elements.pictureSelect.value;
+  const selectedImage = sessionPictures.get(selectedValue);
 
   if (selectedImage) {
-    showImage(selectedImage);
+    if (hasUnsavedChanges) {
+      elements.pictureSelect.value = activePictureId;
+    }
+
+    runRiskyAction(() => {
+      elements.pictureSelect.value = selectedValue;
+      showImage(selectedImage);
+      markUnsaved();
+    });
   }
 }
 
@@ -466,6 +483,7 @@ function getProjectCode() {
   return {
     version: 1,
     savedAt: new Date().toISOString(),
+    session: { ...sessionDetails },
     picture: picture
       ? {
           name: picture.name,
@@ -515,13 +533,6 @@ function getCsvText() {
   return rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
 }
 
-function exportCsv() {
-  downloadBlob(
-    new Blob([getCsvText()], { type: "text/csv;charset=utf-8" }),
-    "highlight-notes.csv",
-  );
-}
-
 function sanitizeFilename(value) {
   return String(value || "highlight-project")
     .replace(/[<>:"/\\|?*]/g, "-")
@@ -533,7 +544,9 @@ function sanitizeFilename(value) {
 
 function getProjectFilename() {
   const picture = getCurrentPicture();
-  return `${sanitizeFilename(picture?.name || "highlight-project")}-${Date.now()}`;
+  return sanitizeFilename(
+    elements.projectFolderName.value.trim() || picture?.name || "highlight-project",
+  );
 }
 
 async function writeDirectoryFile(directory, filename, contents) {
@@ -573,6 +586,16 @@ function createHighlightFromRecord(record) {
 
 function restoreProjectCode(projectCode) {
   clearHighlights();
+
+  if (projectCode.session) {
+    sessionDetails.name = projectCode.session.name || "";
+    sessionDetails.storeNumber = projectCode.session.storeNumber || "";
+    sessionDetails.storeLocation = projectCode.session.storeLocation || "";
+    elements.sessionName.value = sessionDetails.name;
+    elements.sessionStoreNumber.value = sessionDetails.storeNumber;
+    elements.sessionStoreLocation.value = sessionDetails.storeLocation;
+    updateSessionSummary();
+  }
 
   for (const record of projectCode.highlights || []) {
     createHighlightFromRecord(record);
@@ -627,18 +650,6 @@ function createSourceImageBlob() {
   });
 }
 
-async function exportMarkedImage() {
-  try {
-    const blob = await createMarkedImageBlob();
-
-    if (blob) {
-      downloadBlob(blob, "highlighted-picture.png");
-    }
-  } catch {
-    window.alert("This picture cannot be exported with highlights from the browser.");
-  }
-}
-
 async function saveProjectFolder() {
   const projectBaseName = getProjectFilename();
   const sourcePictureFilename = `${projectBaseName}-source-picture.png`;
@@ -667,23 +678,26 @@ async function saveProjectFolder() {
         new Blob([JSON.stringify(projectCode, null, 2)], { type: "application/json" }),
         codeFilename,
       );
+      markExported();
       window.alert("Your browser does not support folder saving, so the project files were downloaded separately.");
       return;
     }
 
     const directory = await window.showDirectoryPicker({ mode: "readwrite" });
-    await writeDirectoryFile(directory, sourcePictureFilename, sourceImageBlob);
-    await writeDirectoryFile(directory, highlightedPictureFilename, markedImageBlob);
+    const projectDirectory = await directory.getDirectoryHandle(projectBaseName, { create: true });
+    await writeDirectoryFile(projectDirectory, sourcePictureFilename, sourceImageBlob);
+    await writeDirectoryFile(projectDirectory, highlightedPictureFilename, markedImageBlob);
     await writeDirectoryFile(
-      directory,
+      projectDirectory,
       csvFilename,
       new Blob([getCsvText()], { type: "text/csv;charset=utf-8" }),
     );
     await writeDirectoryFile(
-      directory,
+      projectDirectory,
       codeFilename,
       new Blob([JSON.stringify(projectCode, null, 2)], { type: "application/json" }),
     );
+    markExported();
   } catch {
     window.alert("The project folder could not be saved.");
   }
@@ -709,6 +723,7 @@ async function loadProjectFolder() {
     }
 
     restoreProjectCode(projectCode);
+    markExported();
   } catch {
     window.alert("The selected folder does not contain a valid saved project.");
   }
@@ -731,7 +746,12 @@ elements.highlights.addEventListener("pointerleave", () => {
 });
 elements.toggleColor.addEventListener("click", toggleColor);
 elements.undoHighlight.addEventListener("click", undoHighlight);
-elements.clearHighlights.addEventListener("click", clearHighlights);
+elements.clearHighlights.addEventListener("click", () => {
+  runRiskyAction(() => {
+    clearHighlights();
+    markUnsaved();
+  });
+});
 elements.builtInPictures.addEventListener("change", loadBuiltInPicture);
 elements.mapTab.addEventListener("click", () => setActiveTab("map"));
 elements.notesTab.addEventListener("click", () => {
@@ -743,14 +763,14 @@ elements.saveNote.addEventListener("click", () => {
     return;
   }
 
-  const store = getStoreDetails();
   selectedHighlight.dataset.note = elements.highlightNote.value.trim();
-  selectedHighlight.dataset.author = elements.noteAuthor.value.trim();
-  selectedHighlight.dataset.storeNumber = store.storeNumber;
-  selectedHighlight.dataset.storeLocation = store.storeLocation;
+  selectedHighlight.dataset.author = sessionDetails.name;
+  selectedHighlight.dataset.storeNumber = sessionDetails.storeNumber;
+  selectedHighlight.dataset.storeLocation = sessionDetails.storeLocation;
   selectedHighlight.dataset.timestamp = new Date().toISOString();
   selectedHighlight.classList.toggle("has-note", Boolean(selectedHighlight.dataset.note));
   elements.noteTimestamp.textContent = formatTimestamp(selectedHighlight.dataset.timestamp);
+  markUnsaved();
   renderNotesList();
 });
 elements.notesList.addEventListener("click", (event) => {
@@ -767,16 +787,35 @@ elements.notesList.addEventListener("click", (event) => {
   }
 });
 elements.sizeRange.addEventListener("input", updateSizePreview);
-elements.storeLocation.addEventListener("change", updateCustomStoreFields);
 elements.fileInput.addEventListener("change", loadUploadedImages);
 elements.pictureSelect.addEventListener("change", changeImage);
-elements.exportCsv.addEventListener("click", exportCsv);
-elements.exportImage.addEventListener("click", exportMarkedImage);
 elements.saveProject.addEventListener("click", saveProjectFolder);
-elements.loadProjectFolder.addEventListener("click", loadProjectFolder);
-window.addEventListener("beforeunload", revokeUploadedImages);
+elements.loadProjectFolder.addEventListener("click", () => runRiskyAction(loadProjectFolder));
+elements.sessionForm.addEventListener("submit", () => {
+  saveSessionDetails();
+  markUnsaved();
+});
+elements.editSession.addEventListener("click", () => {
+  elements.sessionName.value = sessionDetails.name;
+  elements.sessionStoreNumber.value = sessionDetails.storeNumber;
+  elements.sessionStoreLocation.value = sessionDetails.storeLocation;
+  elements.sessionDialog.showModal();
+});
+elements.cancelRiskyAction.addEventListener("click", () => {
+  pendingRiskyAction = null;
+});
+elements.confirmRiskyAction.addEventListener("click", confirmRiskyAction);
+window.addEventListener("beforeunload", (event) => {
+  if (hasUnsavedChanges) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
+window.addEventListener("pagehide", revokeUploadedImages);
 
 updateSizePreview();
 updatePreviewColor();
 registerInitialPicture();
 renderNotesList();
+updateSessionSummary();
+elements.sessionDialog.showModal();

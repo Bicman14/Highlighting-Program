@@ -12,6 +12,41 @@
     <script src="script.js" defer></script>
   </head>
   <body>
+    <dialog id="session-dialog">
+      <form method="dialog" id="session-form" class="dialog-card">
+        <h2>Session Details</h2>
+        <p class="helper-text">Enter this once. New notes will use these details automatically.</p>
+        <div class="compact-grid">
+          <div class="field">
+            <label for="session-name">Name</label>
+            <input id="session-name" type="text" required />
+          </div>
+          <div class="field">
+            <label for="session-store-number">Store #</label>
+            <input id="session-store-number" type="text" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="session-store-location">Location</label>
+          <input id="session-store-location" type="text" required />
+        </div>
+        <button id="save-session" type="submit">Start session</button>
+      </form>
+    </dialog>
+
+    <dialog id="unsaved-dialog">
+      <form method="dialog" class="dialog-card">
+        <h2>Unsaved session data</h2>
+        <p>
+          You have current-session data that may be lost if you continue before exporting the project folder.
+        </p>
+        <div class="dialog-actions">
+          <button id="cancel-risky-action" value="cancel" type="submit">Stay here</button>
+          <button id="confirm-risky-action" value="confirm" type="submit">Continue anyway</button>
+        </div>
+      </form>
+    </dialog>
+
     <main class="app">
       <section class="map-container" aria-label="Interactive map">
         <div class="map-frame">
@@ -22,7 +57,13 @@
       </section>
 
       <aside class="controls" aria-label="Highlight controls">
-        <h1>Highlighting Program</h1>
+        <header class="sidebar-header">
+          <div>
+            <h1>Highlighting Program</h1>
+            <p id="session-summary">No session details yet.</p>
+          </div>
+          <button id="edit-session" class="small-button" type="button">Edit</button>
+        </header>
 
         <div class="tabs" role="tablist" aria-label="Sidebar views">
           <button
@@ -48,20 +89,29 @@
         </div>
 
         <div class="tab-panel active" id="map-panel" role="tabpanel" aria-labelledby="map-tab">
-          <button id="toggle-color" type="button">Highlight color: Green</button>
-          <button id="undo-highlight" type="button">Undo last highlight</button>
-          <button id="clear-highlights" type="button">Clear all highlights</button>
-
-          <div class="field">
+          <section class="panel-section">
+            <h2>Picture</h2>
             <label for="built-in-pictures">Built-in pictures</label>
             <select id="built-in-pictures">
               <option value="">Choose a built-in picture</option>
               <option value="assets/firemap.png">Fire extinguisher map</option>
               <option value="assets/worldmap.jpg">World map</option>
             </select>
-          </div>
+            <label for="file">Choose or upload picture</label>
+            <input type="file" id="file" accept="image/*" />
+            <label for="pictures">Session picture history</label>
+            <select id="pictures" disabled>
+              <option value="">No pictures displayed this session</option>
+            </select>
+          </section>
 
-          <div class="field">
+          <section class="panel-section">
+            <h2>Highlight</h2>
+            <div class="button-row">
+              <button id="toggle-color" type="button">Color: Green</button>
+              <button id="undo-highlight" type="button">Undo</button>
+              <button id="clear-highlights" type="button">Clear</button>
+            </div>
             <label for="size">Highlight size</label>
             <div class="size-control">
               <input value="45" type="range" id="size" min="10" max="100" />
@@ -72,61 +122,29 @@
             <p class="helper-text">
               Preview: <span id="size-value">45</span>px circle
             </p>
-          </div>
+          </section>
 
-          <div class="field">
-            <label for="file">Choose or upload picture</label>
-            <input type="file" id="file" accept="image/*" />
-            <p class="helper-text">Selected pictures stay available only for this browser session.</p>
-          </div>
-
-          <div class="field">
-            <label for="pictures">Session picture history</label>
-            <select id="pictures" disabled>
-              <option value="">No pictures displayed this session</option>
-            </select>
-          </div>
-
-          <div class="field note-editor">
+          <section class="panel-section note-editor">
+            <h2>Selected Note</h2>
             <label for="highlight-note">Selected highlight note</label>
             <p id="selected-highlight-label">Select a highlight to add a note.</p>
-            <input
-              id="note-author"
-              type="text"
-              placeholder="Person's name"
-              disabled
-            />
-            <select id="store-location" disabled>
-              <option value="">Select store # and location</option>
-              <option value="001|Main Store">001 - Main Store</option>
-              <option value="002|North Location">002 - North Location</option>
-              <option value="003|South Location">003 - South Location</option>
-              <option value="custom|Custom Location">Custom location</option>
-            </select>
-            <div class="custom-store-fields" id="custom-store-fields" hidden>
-              <input id="custom-store-number" type="text" placeholder="Store #" disabled />
-              <input id="custom-store-location" type="text" placeholder="Store location" disabled />
-            </div>
             <textarea
               id="highlight-note"
-              rows="5"
+              rows="3"
               placeholder="Add a note for the selected highlight"
               disabled
             ></textarea>
             <p class="helper-text" id="note-timestamp">No note saved yet.</p>
             <button id="save-note" type="button" disabled>Save note</button>
-          </div>
+          </section>
 
-          <div class="field export-tools">
-            <label>Exports and saved project code</label>
-            <button id="export-csv" type="button">Export Excel CSV</button>
-            <button id="export-image" type="button">Export picture with highlights</button>
+          <section class="panel-section export-tools">
+            <h2>Project</h2>
+            <label for="project-folder-name">Folder name</label>
+            <input id="project-folder-name" type="text" placeholder="highlight-project" />
             <button id="save-project" type="button">Save project folder</button>
             <button id="load-project-folder" type="button">Load project folder</button>
-            <p class="helper-text">
-              Project folders include the highlighted picture, Excel CSV, and restore code.
-            </p>
-          </div>
+          </section>
 
           <p class="counter" aria-live="polite">
             <span><strong class="green-text" id="green-count">0</strong> green</span>

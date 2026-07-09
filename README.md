@@ -16,11 +16,11 @@ The dropdown resets on every new browser session. It only lists pictures that ha
 
 ## Controls
 
+- Enter your name, store number, and location when the session starts.
 - Click the image to place a highlight, or click an existing highlight to select it.
 - Switch between green and red highlights with **Highlight color**.
 - Adjust the circle diameter with **Highlight size** and use the inline preview to see the exact circle size.
-- Add notes to the selected highlight from the **Map** tab.
-- Add the note author's name plus store number and location before saving.
+- Add notes to the selected highlight from the compact **Map** tab.
 - Open the **Notes** tab to review saved notes.
 - Select a saved note to locate its highlight on the image.
 - Remove the latest mark with **Undo last highlight**.
@@ -28,15 +28,16 @@ The dropdown resets on every new browser session. It only lists pictures that ha
 - Choose a bundled image from **Built-in pictures** for quick use.
 - Choose or upload a picture from a local folder.
 - Use **Session picture history** to switch between pictures displayed during the current session.
-- Export note details to a CSV file that opens in Excel.
-- Export the current picture with highlight circles drawn onto it when the browser can access the image.
-- Save and reload a project folder with the source picture, highlighted picture, Excel CSV, and restore JSON.
+- Save one named project folder with the source picture, highlighted picture, Excel CSV, and restore JSON.
+- Reload a saved project folder to restore the picture, circle positions, notes, and session details.
+
+The app warns before closing, reloading, clearing, changing pictures, or loading another project when current-session data has not been exported.
 
 ## Project structure
 
 - `index.html` contains the application markup.
 - `styles.css` defines the responsive layout and highlight overlay.
-- `script.js` handles image selection, highlighting, notes, exports, saved project codes, and counters.
+- `script.js` handles image selection, highlighting, notes, folder export/load, unsaved-data protection, and counters.
 - `assets/` contains the bundled example images.
 
 Uploaded images and highlights remain in the browser and are not sent anywhere.
