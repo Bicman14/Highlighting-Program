@@ -286,39 +286,17 @@ input[type="file"] {
   gap: 0.35rem;
 }
 
-.size-control {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 4.25rem;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.size-preview-wrap {
-  display: grid;
-  place-items: center;
-  width: 4.25rem;
-  height: 4.25rem;
-  border: 1px dashed var(--border);
-  border-radius: 0.5rem;
-  background:
-    linear-gradient(45deg, var(--control-hover) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--control-hover) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--control-hover) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--control-hover) 75%);
-  background-position:
-    0 0,
-    0 0.5rem,
-    0.5rem -0.5rem,
-    -0.5rem 0;
-  background-size: 1rem 1rem;
-}
-
 #size-preview {
+  position: fixed;
+  z-index: 20;
+  display: none;
   width: 45px;
   height: 45px;
   border-radius: 50%;
   background: rgb(0 128 0 / 50%);
   outline: 1px solid rgb(0 0 0 / 20%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 #size-preview.red {
@@ -468,12 +446,4 @@ dialog::backdrop {
     display: none;
   }
 
-  .size-preview-wrap {
-    width: 3.5rem;
-    height: 3.5rem;
-  }
-
-  .size-control {
-    grid-template-columns: minmax(0, 1fr) 3.5rem;
-  }
 }

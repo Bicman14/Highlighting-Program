@@ -124,12 +124,7 @@
               <button id="clear-highlights" type="button">Clear</button>
             </div>
             <label for="size">Highlight size</label>
-            <div class="size-control">
-              <input value="45" type="range" id="size" min="10" max="100" />
-              <div class="size-preview-wrap" aria-hidden="true">
-                <div id="size-preview"></div>
-              </div>
-            </div>
+            <input value="45" type="range" id="size" min="10" max="100" />
             <p class="helper-text">
               Preview: <span id="size-value">45</span>px circle
             </p>
@@ -170,5 +165,6 @@
         </div>
       </aside>
     </main>
+    <div id="size-preview" aria-hidden="true"></div>
   </body>
 </html>

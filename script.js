@@ -87,6 +87,16 @@ function updatePreviewColor() {
   elements.sizePreview.classList.toggle("red", currentColor === "red");
 }
 
+function setSizePreviewPosition(event) {
+  elements.sizePreview.style.display = "block";
+  elements.sizePreview.style.left = `${event.clientX}px`;
+  elements.sizePreview.style.top = `${event.clientY}px`;
+}
+
+function hideSizePreview() {
+  elements.sizePreview.style.display = "none";
+}
+
 function fitMapToAvailableArea() {
   if (!elements.map.naturalWidth || !elements.map.naturalHeight) {
     return;
@@ -831,7 +841,32 @@ elements.notesList.addEventListener("click", (event) => {
     locateHighlight(highlight);
   }
 });
-elements.sizeRange.addEventListener("input", updateSizePreview);
+elements.sizeRange.addEventListener("pointerenter", setSizePreviewPosition);
+elements.sizeRange.addEventListener("pointermove", setSizePreviewPosition);
+elements.sizeRange.addEventListener("pointerdown", (event) => {
+  elements.sizeRange.setPointerCapture(event.pointerId);
+  setSizePreviewPosition(event);
+});
+elements.sizeRange.addEventListener("pointerup", (event) => {
+  elements.sizeRange.releasePointerCapture(event.pointerId);
+
+  if (!elements.sizeRange.matches(":hover")) {
+    hideSizePreview();
+  }
+});
+elements.sizeRange.addEventListener("pointercancel", hideSizePreview);
+elements.sizeRange.addEventListener("pointerleave", (event) => {
+  if (!elements.sizeRange.hasPointerCapture(event.pointerId)) {
+    hideSizePreview();
+  }
+});
+elements.sizeRange.addEventListener("input", (event) => {
+  updateSizePreview();
+
+  if (event instanceof PointerEvent) {
+    setSizePreviewPosition(event);
+  }
+});
 elements.fileInput.addEventListener("change", loadUploadedImages);
 elements.pictureSelect.addEventListener("change", changeImage);
 elements.saveProject.addEventListener("click", saveProjectFolder);
