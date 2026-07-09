@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Mark points of interest on a floor plan or uploaded image."
+    />
+    <title>Highlighting Program</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <dialog id="session-dialog">
+      <form method="dialog" id="session-form" class="dialog-card">
+        <h2>Session Details</h2>
+        <p class="helper-text">Enter this once. New notes will use these details automatically.</p>
+        <div class="compact-grid">
+          <div class="field">
+            <label for="session-name">Name</label>
+            <input id="session-name" type="text" required />
+          </div>
+          <div class="field">
+            <label for="session-store-number">Store #</label>
+            <input id="session-store-number" type="text" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="session-store-location">Location</label>
+          <input id="session-store-location" type="text" required />
+        </div>
+        <button id="save-session" type="submit">Start session</button>
+      </form>
+    </dialog>
+
+    <dialog id="unsaved-dialog">
+      <form method="dialog" class="dialog-card">
+        <h2>Unsaved session data</h2>
+        <p>
+          You have current-session data that may be lost if you continue before exporting the project folder.
+        </p>
+        <div class="dialog-actions">
+          <button id="cancel-risky-action" value="cancel" type="submit">Stay here</button>
+          <button id="confirm-risky-action" value="confirm" type="submit">Continue anyway</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="note-dialog">
+      <form method="dialog" id="note-dialog-form" class="dialog-card">
+        <h2>Edit Highlight Note</h2>
+        <p id="note-dialog-label" class="helper-text">No highlight selected.</p>
+        <textarea
+          id="note-dialog-text"
+          rows="5"
+          placeholder="Add a note for this highlight"
+        ></textarea>
+        <p class="helper-text" id="note-dialog-timestamp">No note saved yet.</p>
+        <div class="dialog-actions">
+          <button value="cancel" type="submit">Cancel</button>
+          <button id="save-note-dialog" value="save" type="submit">Save note</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="color-dialog">
+      <form method="dialog" id="color-dialog-form" class="dialog-card">
+        <h2>Add Highlight Color</h2>
+        <label for="custom-color">Choose color</label>
+        <input id="custom-color" type="color" value="#2f80ed" />
+        <div class="color-dialog-preview-wrap">
+          <div class="color-dialog-preview" id="custom-color-preview" aria-hidden="true"></div>
+          <p class="helper-text">Live preview updates as you adjust the color panel sliders.</p>
+        </div>
+        <div class="dialog-actions">
+          <button value="cancel" type="submit">Cancel</button>
+          <button id="save-custom-color" value="save" type="submit">Save color</button>
+        </div>
+      </form>
+    </dialog>
+
+    <main class="app">
+      <section class="map-container" aria-label="Interactive map">
+        <div class="map-frame">
+          <img src="assets/firemap.png" alt="Fire extinguisher map" id="map" />
+          <div id="highlights" aria-label="Highlights"></div>
+          <div id="cursor-preview" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <aside class="controls" aria-label="Highlight controls">
+        <header class="sidebar-header">
+          <div>
+            <h1>Highlighting Program</h1>
+            <p id="session-summary">No session details yet.</p>
+          </div>
+          <div class="header-actions">
+            <button
+              id="theme-toggle"
+              class="icon-button"
+              type="button"
+              aria-label="Switch to dark mode"
+              title="Switch to dark mode"
+            >
+              🌙
+            </button>
+            <button id="edit-session" class="small-button" type="button">Edit</button>
+          </div>
+        </header>
+
+        <div class="tabs" role="tablist" aria-label="Sidebar views">
+          <button
+            class="tab-button active"
+            id="map-tab"
+            type="button"
+            role="tab"
+            aria-controls="map-panel"
+            aria-selected="true"
+          >
+            Map
+          </button>
+          <button
+            class="tab-button"
+            id="notes-tab"
+            type="button"
+            role="tab"
+            aria-controls="notes-panel"
+            aria-selected="false"
+          >
+            Notes
+          </button>
+          <button
+            class="tab-button"
+            id="colors-tab"
+            type="button"
+            role="tab"
+            aria-controls="colors-panel"
+            aria-selected="false"
+          >
+            Colors
+          </button>
+        </div>
+
+        <div class="tab-panel active" id="map-panel" role="tabpanel" aria-labelledby="map-tab">
+          <section class="panel-section">
+            <h2>Picture</h2>
+            <label for="built-in-pictures">Built-in pictures</label>
+            <select id="built-in-pictures">
+              <option value="">Choose a built-in picture</option>
+              <option value="assets/firemap.png">Fire extinguisher map</option>
+              <option value="assets/worldmap.jpg">World map</option>
+            </select>
+            <label for="file">Choose or upload picture</label>
+            <input type="file" id="file" accept="image/*" />
+            <label for="pictures">Session picture history</label>
+            <select id="pictures" disabled>
+              <option value="">No pictures displayed this session</option>
+            </select>
+          </section>
+
+          <section class="panel-section">
+            <h2>Highlight</h2>
+            <div class="button-row">
+              <button id="toggle-color" type="button">Color: Green</button>
+              <button id="undo-highlight" type="button">Undo</button>
+              <button id="clear-highlights" type="button">Clear</button>
+            </div>
+            <label for="size">Highlight size</label>
+            <input value="45" type="range" id="size" min="10" max="100" />
+            <p class="helper-text">
+              Preview: <span id="size-value">45</span>px circle
+            </p>
+          </section>
+
+          <section class="panel-section note-editor">
+            <h2>Selected Note</h2>
+            <label for="highlight-note">Selected highlight note</label>
+            <p id="selected-highlight-label">Select a highlight to add a note.</p>
+            <textarea
+              id="highlight-note"
+              rows="3"
+              placeholder="Add a note for the selected highlight"
+              disabled
+            ></textarea>
+            <p class="helper-text" id="note-timestamp">No note saved yet.</p>
+            <button id="save-note" type="button" disabled>Save note</button>
+          </section>
+
+          <section class="panel-section export-tools">
+            <h2>Project</h2>
+            <label for="project-folder-name">Folder name</label>
+            <input id="project-folder-name" type="text" placeholder="highlight-project" />
+            <button id="save-project" type="button">Save project folder</button>
+            <button id="load-project-folder" type="button">Load project folder</button>
+          </section>
+
+          <div class="counter" id="color-counts" aria-live="polite"></div>
+        </div>
+
+        <div class="tab-panel" id="notes-panel" role="tabpanel" aria-labelledby="notes-tab" hidden>
+          <h2>Highlight Notes</h2>
+          <p class="helper-text">Select a note to locate its circle on the map.</p>
+          <div id="notes-list" class="notes-list" aria-live="polite"></div>
+        </div>
+
+        <div class="tab-panel" id="colors-panel" role="tabpanel" aria-labelledby="colors-tab" hidden>
+          <h2>Highlight Colors</h2>
+          <p class="helper-text">Choose a color circle, add a new color, or delete a saved custom color.</p>
+          <div id="color-list" class="color-list" aria-label="Available highlight colors"></div>
+          <div class="button-row">
+            <button id="add-color" type="button">Add</button>
+            <button id="delete-color" type="button">Delete</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+    <div id="size-preview" aria-hidden="true"></div>
+  </body>
+</html>
