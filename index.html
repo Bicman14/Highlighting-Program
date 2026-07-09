@@ -47,6 +47,39 @@
       </form>
     </dialog>
 
+    <dialog id="note-dialog">
+      <form method="dialog" id="note-dialog-form" class="dialog-card">
+        <h2>Edit Highlight Note</h2>
+        <p id="note-dialog-label" class="helper-text">No highlight selected.</p>
+        <textarea
+          id="note-dialog-text"
+          rows="5"
+          placeholder="Add a note for this highlight"
+        ></textarea>
+        <p class="helper-text" id="note-dialog-timestamp">No note saved yet.</p>
+        <div class="dialog-actions">
+          <button value="cancel" type="submit">Cancel</button>
+          <button id="save-note-dialog" value="save" type="submit">Save note</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="color-dialog">
+      <form method="dialog" id="color-dialog-form" class="dialog-card">
+        <h2>Add Highlight Color</h2>
+        <label for="custom-color">Choose color</label>
+        <input id="custom-color" type="color" value="#2f80ed" />
+        <div class="color-dialog-preview-wrap">
+          <div class="color-dialog-preview" id="custom-color-preview" aria-hidden="true"></div>
+          <p class="helper-text">Live preview updates as you adjust the color panel sliders.</p>
+        </div>
+        <div class="dialog-actions">
+          <button value="cancel" type="submit">Cancel</button>
+          <button id="save-custom-color" value="save" type="submit">Save color</button>
+        </div>
+      </form>
+    </dialog>
+
     <main class="app">
       <section class="map-container" aria-label="Interactive map">
         <div class="map-frame">
@@ -96,6 +129,16 @@
             aria-selected="false"
           >
             Notes
+          </button>
+          <button
+            class="tab-button"
+            id="colors-tab"
+            type="button"
+            role="tab"
+            aria-controls="colors-panel"
+            aria-selected="false"
+          >
+            Colors
           </button>
         </div>
 
@@ -152,16 +195,23 @@
             <button id="load-project-folder" type="button">Load project folder</button>
           </section>
 
-          <p class="counter" aria-live="polite">
-            <span><strong class="green-text" id="green-count">0</strong> green</span>
-            <span><strong class="red-text" id="red-count">0</strong> red</span>
-          </p>
+          <div class="counter" id="color-counts" aria-live="polite"></div>
         </div>
 
         <div class="tab-panel" id="notes-panel" role="tabpanel" aria-labelledby="notes-tab" hidden>
           <h2>Highlight Notes</h2>
           <p class="helper-text">Select a note to locate its circle on the map.</p>
           <div id="notes-list" class="notes-list" aria-live="polite"></div>
+        </div>
+
+        <div class="tab-panel" id="colors-panel" role="tabpanel" aria-labelledby="colors-tab" hidden>
+          <h2>Highlight Colors</h2>
+          <p class="helper-text">Choose a color circle, add a new color, or delete a saved custom color.</p>
+          <div id="color-list" class="color-list" aria-label="Available highlight colors"></div>
+          <div class="button-row">
+            <button id="add-color" type="button">Add</button>
+            <button id="delete-color" type="button">Delete</button>
+          </div>
         </div>
       </aside>
     </main>

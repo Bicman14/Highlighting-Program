@@ -22,8 +22,12 @@ The dropdown resets on every new browser session. It only lists pictures that ha
 - Switch between green and red highlights with **Highlight color**.
 - Adjust the circle diameter with **Highlight size** and use the inline preview to see the exact circle size.
 - Add notes to the selected highlight from the compact **Map** tab.
+- Double-click a highlight to edit its note in a popup dialog.
 - Open the **Notes** tab to review saved notes.
 - Select a saved note to locate its highlight on the image.
+- Open the **Colors** tab to choose red, green, or saved custom highlight colors.
+- Add custom colors with the color picker; the live preview updates while adjusting the picker.
+- Delete saved custom colors from the **Colors** tab.
 - Remove the latest mark with **Undo last highlight**.
 - Remove every mark with **Clear all highlights**.
 - Choose a bundled image from **Built-in pictures** for quick use.

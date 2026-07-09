@@ -17,8 +17,10 @@ const elements = {
   cursorPreview: document.getElementById("cursor-preview"),
   mapTab: document.getElementById("map-tab"),
   notesTab: document.getElementById("notes-tab"),
+  colorsTab: document.getElementById("colors-tab"),
   mapPanel: document.getElementById("map-panel"),
   notesPanel: document.getElementById("notes-panel"),
+  colorsPanel: document.getElementById("colors-panel"),
   toggleColor: document.getElementById("toggle-color"),
   undoHighlight: document.getElementById("undo-highlight"),
   clearHighlights: document.getElementById("clear-highlights"),
@@ -35,9 +37,22 @@ const elements = {
   projectFolderName: document.getElementById("project-folder-name"),
   saveProject: document.getElementById("save-project"),
   loadProjectFolder: document.getElementById("load-project-folder"),
+  noteDialog: document.getElementById("note-dialog"),
+  noteDialogForm: document.getElementById("note-dialog-form"),
+  noteDialogLabel: document.getElementById("note-dialog-label"),
+  noteDialogText: document.getElementById("note-dialog-text"),
+  noteDialogTimestamp: document.getElementById("note-dialog-timestamp"),
+  saveNoteDialog: document.getElementById("save-note-dialog"),
+  colorDialog: document.getElementById("color-dialog"),
+  colorDialogForm: document.getElementById("color-dialog-form"),
+  customColor: document.getElementById("custom-color"),
+  customColorPreview: document.getElementById("custom-color-preview"),
+  saveCustomColor: document.getElementById("save-custom-color"),
+  colorList: document.getElementById("color-list"),
+  addColor: document.getElementById("add-color"),
+  deleteColor: document.getElementById("delete-color"),
   notesList: document.getElementById("notes-list"),
-  greenCount: document.getElementById("green-count"),
-  redCount: document.getElementById("red-count"),
+  colorCounts: document.getElementById("color-counts"),
 };
 
 for (const [name, element] of Object.entries(elements)) {
@@ -47,7 +62,10 @@ for (const [name, element] of Object.entries(elements)) {
 }
 
 const sessionPictures = new Map();
-let currentColor = "green";
+const defaultColors = ["#008000", "#ff0000"];
+const colorStorageKey = "highlighting-program-colors";
+let customColors = [];
+let currentColor = defaultColors[0];
 let diameter = elements.sizeRange.valueAsNumber;
 let highlightId = 0;
 let selectedHighlight = null;
@@ -62,16 +80,35 @@ const sessionDetails = {
 };
 
 function getCounts() {
-  return {
-    green: elements.highlights.querySelectorAll(".highlight.green").length,
-    red: elements.highlights.querySelectorAll(".highlight.red").length,
-  };
+  const highlights = [...elements.highlights.querySelectorAll(".highlight")];
+  const counts = new Map();
+
+  for (const highlight of highlights) {
+    const color = getHighlightColor(highlight);
+    counts.set(color, (counts.get(color) || 0) + 1);
+  }
+
+  return counts;
 }
 
 function updateCounter() {
   const counts = getCounts();
-  elements.greenCount.textContent = counts.green;
-  elements.redCount.textContent = counts.red;
+  elements.colorCounts.replaceChildren();
+
+  const colorsToShow = [...new Set([...getAvailableColors(), ...counts.keys()])];
+
+  for (const color of colorsToShow) {
+    const count = counts.get(color) || 0;
+    const item = document.createElement("span");
+    item.className = "color-count";
+    item.innerHTML = `
+      <span class="count-dot" aria-hidden="true"></span>
+      <strong>${count}</strong>
+    `;
+    item.querySelector(".count-dot").style.background = color;
+    item.setAttribute("aria-label", `${count} highlights for ${color}`);
+    elements.colorCounts.appendChild(item);
+  }
 }
 
 function updateSizePreview() {
@@ -84,7 +121,36 @@ function updateSizePreview() {
 }
 
 function updatePreviewColor() {
-  elements.sizePreview.classList.toggle("red", currentColor === "red");
+  elements.sizePreview.style.background = toAlphaColor(currentColor, 0.5);
+}
+
+function updateColorButton() {
+  elements.toggleColor.textContent = "Next color";
+  elements.toggleColor.style.borderColor = currentColor;
+}
+
+function normalizeColor(color) {
+  if (!color) {
+    return defaultColors[0];
+  }
+
+  if (color === "green") {
+    return defaultColors[0];
+  }
+
+  if (color === "red") {
+    return defaultColors[1];
+  }
+
+  return color.toLowerCase();
+}
+
+function toAlphaColor(hexColor, alpha) {
+  const color = normalizeColor(hexColor);
+  const red = Number.parseInt(color.slice(1, 3), 16);
+  const green = Number.parseInt(color.slice(3, 5), 16);
+  const blue = Number.parseInt(color.slice(5, 7), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
 function setSizePreviewPosition(event) {
@@ -137,17 +203,90 @@ function updateThemeToggle() {
   elements.themeToggle.title = label;
 }
 
+function getAvailableColors() {
+  return [...defaultColors, ...customColors];
+}
+
+function loadCustomColors() {
+  try {
+    const savedColors = JSON.parse(localStorage.getItem(colorStorageKey) || "[]");
+    customColors = Array.isArray(savedColors)
+      ? savedColors.map(normalizeColor).filter((color) => !defaultColors.includes(color))
+      : [];
+  } catch {
+    customColors = [];
+  }
+}
+
+function saveCustomColors() {
+  localStorage.setItem(colorStorageKey, JSON.stringify(customColors));
+}
+
+function updateColorPickerPreview() {
+  elements.customColorPreview.style.background = elements.customColor.value;
+}
+
+function selectColor(color) {
+  currentColor = normalizeColor(color);
+  updatePreviewColor();
+  updateColorButton();
+  renderColorList();
+}
+
+function renderColorList() {
+  elements.colorList.replaceChildren();
+
+  for (const color of getAvailableColors()) {
+    const colorButton = document.createElement("button");
+    colorButton.className = "color-swatch";
+    colorButton.type = "button";
+    colorButton.dataset.color = color;
+    colorButton.style.background = color;
+    colorButton.setAttribute("aria-label", `Use ${color}`);
+    colorButton.classList.toggle("active", color === currentColor);
+    elements.colorList.appendChild(colorButton);
+  }
+
+  elements.deleteColor.disabled = !customColors.includes(currentColor);
+  updateCounter();
+}
+
+function openNoteDialog(highlight) {
+  setSelectedHighlight(highlight);
+  elements.noteDialogLabel.textContent = getHighlightLabel(highlight);
+  elements.noteDialogText.value = highlight.dataset.note || "";
+  elements.noteDialogTimestamp.textContent = formatTimestamp(highlight.dataset.timestamp);
+  elements.noteDialog.showModal();
+}
+
+function saveSelectedHighlightNote(noteText) {
+  if (!selectedHighlight) {
+    return;
+  }
+
+  selectedHighlight.dataset.note = noteText.trim();
+  selectedHighlight.dataset.author = sessionDetails.name;
+  selectedHighlight.dataset.storeNumber = sessionDetails.storeNumber;
+  selectedHighlight.dataset.storeLocation = sessionDetails.storeLocation;
+  selectedHighlight.dataset.timestamp = new Date().toISOString();
+  selectedHighlight.classList.toggle("has-note", Boolean(selectedHighlight.dataset.note));
+  elements.highlightNote.value = selectedHighlight.dataset.note;
+  elements.noteTimestamp.textContent = formatTimestamp(selectedHighlight.dataset.timestamp);
+  elements.noteDialogTimestamp.textContent = formatTimestamp(selectedHighlight.dataset.timestamp);
+  markUnsaved();
+  renderNotesList();
+}
+
 function getCurrentPicture() {
   return sessionPictures.get(elements.pictureSelect.value) || null;
 }
 
 function getHighlightLabel(highlight) {
-  const color = highlight.classList.contains("red") ? "red" : "green";
-  return `Highlight ${highlight.dataset.number} (${color})`;
+  return `Highlight ${highlight.dataset.number} (${highlight.dataset.color || defaultColors[0]})`;
 }
 
 function getHighlightColor(highlight) {
-  return highlight.classList.contains("red") ? "red" : "green";
+  return normalizeColor(highlight.dataset.color);
 }
 
 function setNoteFieldsDisabled(disabled) {
@@ -226,15 +365,21 @@ function formatTimestamp(timestamp) {
 
 function setActiveTab(activeTab) {
   const showNotes = activeTab === "notes";
+  const showColors = activeTab === "colors";
+  const showMap = activeTab === "map";
 
-  elements.mapTab.classList.toggle("active", !showNotes);
+  elements.mapTab.classList.toggle("active", showMap);
   elements.notesTab.classList.toggle("active", showNotes);
-  elements.mapTab.setAttribute("aria-selected", String(!showNotes));
+  elements.colorsTab.classList.toggle("active", showColors);
+  elements.mapTab.setAttribute("aria-selected", String(showMap));
   elements.notesTab.setAttribute("aria-selected", String(showNotes));
-  elements.mapPanel.classList.toggle("active", !showNotes);
+  elements.colorsTab.setAttribute("aria-selected", String(showColors));
+  elements.mapPanel.classList.toggle("active", showMap);
   elements.notesPanel.classList.toggle("active", showNotes);
-  elements.mapPanel.hidden = showNotes;
+  elements.colorsPanel.classList.toggle("active", showColors);
+  elements.mapPanel.hidden = !showMap;
   elements.notesPanel.hidden = !showNotes;
+  elements.colorsPanel.hidden = !showColors;
 }
 
 function renderNotesList() {
@@ -332,9 +477,11 @@ function placeHighlight(event) {
   highlight.dataset.xPercent = xPercent.toFixed(4);
   highlight.dataset.yPercent = yPercent.toFixed(4);
   highlight.dataset.diameter = diameter;
+  highlight.dataset.color = currentColor;
   highlight.tabIndex = 0;
   highlight.setAttribute("role", "button");
-  highlight.classList.add("highlight", currentColor);
+  highlight.classList.add("highlight");
+  highlight.style.background = toAlphaColor(currentColor, 0.5);
   highlight.style.left = `${xPercent}%`;
   highlight.style.top = `${yPercent}%`;
   highlight.style.width = `${diameter}px`;
@@ -348,10 +495,9 @@ function placeHighlight(event) {
 }
 
 function toggleColor() {
-  currentColor = currentColor === "green" ? "red" : "green";
-  const label = currentColor[0].toUpperCase() + currentColor.slice(1);
-  elements.toggleColor.textContent = `Color: ${label}`;
-  updatePreviewColor();
+  const colors = getAvailableColors();
+  const currentIndex = colors.indexOf(currentColor);
+  selectColor(colors[(currentIndex + 1) % colors.length]);
 }
 
 function undoHighlight() {
@@ -538,6 +684,7 @@ function getProjectCode() {
     version: 1,
     savedAt: new Date().toISOString(),
     session: { ...sessionDetails },
+    customColors,
     picture: picture
       ? {
           name: picture.name,
@@ -626,10 +773,12 @@ function createHighlightFromRecord(record) {
   highlight.dataset.storeNumber = record.storeNumber || "";
   highlight.dataset.storeLocation = record.storeLocation || "";
   highlight.dataset.timestamp = record.timestamp || "";
+  highlight.dataset.color = normalizeColor(record.color);
   highlight.tabIndex = 0;
   highlight.setAttribute("role", "button");
-  highlight.classList.add("highlight", record.color === "red" ? "red" : "green");
+  highlight.classList.add("highlight");
   highlight.classList.toggle("has-note", Boolean(highlight.dataset.note));
+  highlight.style.background = toAlphaColor(highlight.dataset.color, 0.5);
   highlight.style.left = `${record.xPercent}%`;
   highlight.style.top = `${record.yPercent}%`;
   highlight.style.width = `${restoredDiameter}px`;
@@ -649,6 +798,17 @@ function restoreProjectCode(projectCode) {
     elements.sessionStoreNumber.value = sessionDetails.storeNumber;
     elements.sessionStoreLocation.value = sessionDetails.storeLocation;
     updateSessionSummary();
+  }
+
+  if (Array.isArray(projectCode.customColors)) {
+    customColors = [
+      ...new Set([
+        ...customColors,
+        ...projectCode.customColors.map(normalizeColor).filter((color) => !defaultColors.includes(color)),
+      ]),
+    ];
+    saveCustomColors();
+    renderColorList();
   }
 
   for (const record of projectCode.highlights || []) {
@@ -678,7 +838,7 @@ function createMarkedImageBlob() {
 
     context.beginPath();
     context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    context.fillStyle = record.color === "red" ? "rgba(255, 0, 0, 0.5)" : "rgba(0, 128, 0, 0.5)";
+    context.fillStyle = toAlphaColor(record.color, 0.5);
     context.fill();
   }
 
@@ -784,6 +944,11 @@ async function loadProjectFolder() {
 }
 
 elements.highlights.addEventListener("pointerdown", placeHighlight);
+elements.highlights.addEventListener("dblclick", (event) => {
+  if (event.target.classList.contains("highlight")) {
+    openNoteDialog(event.target);
+  }
+});
 elements.highlights.addEventListener("keydown", (event) => {
   if (!event.target.classList.contains("highlight")) {
     return;
@@ -813,20 +978,56 @@ elements.notesTab.addEventListener("click", () => {
   renderNotesList();
   setActiveTab("notes");
 });
+elements.colorsTab.addEventListener("click", () => {
+  renderColorList();
+  setActiveTab("colors");
+});
+elements.colorList.addEventListener("click", (event) => {
+  const colorButton = event.target.closest(".color-swatch");
+
+  if (colorButton) {
+    selectColor(colorButton.dataset.color);
+  }
+});
+elements.addColor.addEventListener("click", () => {
+  updateColorPickerPreview();
+  elements.colorDialog.showModal();
+});
+elements.deleteColor.addEventListener("click", () => {
+  if (!customColors.includes(currentColor)) {
+    return;
+  }
+
+  customColors = customColors.filter((color) => color !== currentColor);
+  saveCustomColors();
+  selectColor(defaultColors[0]);
+});
+elements.customColor.addEventListener("input", updateColorPickerPreview);
+elements.colorDialogForm.addEventListener("submit", (event) => {
+  if (event.submitter !== elements.saveCustomColor) {
+    return;
+  }
+
+  const color = normalizeColor(elements.customColor.value);
+
+  if (!getAvailableColors().includes(color)) {
+    customColors.push(color);
+    saveCustomColors();
+  }
+
+  selectColor(color);
+});
+elements.noteDialogForm.addEventListener("submit", (event) => {
+  if (event.submitter === elements.saveNoteDialog) {
+    saveSelectedHighlightNote(elements.noteDialogText.value);
+  }
+});
 elements.saveNote.addEventListener("click", () => {
   if (!selectedHighlight) {
     return;
   }
 
-  selectedHighlight.dataset.note = elements.highlightNote.value.trim();
-  selectedHighlight.dataset.author = sessionDetails.name;
-  selectedHighlight.dataset.storeNumber = sessionDetails.storeNumber;
-  selectedHighlight.dataset.storeLocation = sessionDetails.storeLocation;
-  selectedHighlight.dataset.timestamp = new Date().toISOString();
-  selectedHighlight.classList.toggle("has-note", Boolean(selectedHighlight.dataset.note));
-  elements.noteTimestamp.textContent = formatTimestamp(selectedHighlight.dataset.timestamp);
-  markUnsaved();
-  renderNotesList();
+  saveSelectedHighlightNote(elements.highlightNote.value);
 });
 elements.notesList.addEventListener("click", (event) => {
   const noteCard = event.target.closest(".note-card");
@@ -895,7 +1096,10 @@ window.addEventListener("pagehide", revokeUploadedImages);
 window.addEventListener("resize", fitMapToAvailableArea);
 
 updateSizePreview();
+loadCustomColors();
 updatePreviewColor();
+updateColorButton();
+renderColorList();
 registerInitialPicture();
 renderNotesList();
 updateSessionSummary();
